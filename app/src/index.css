@@ -57,4 +57,22 @@ input, select, textarea {
   /* EXCEPCIÓN IMPORTANTE: Permite interactuar con el texto SOLO dentro de los formularios */
   user-select: auto;
   -webkit-user-select: auto;
+
+  /* Añade esto al final de tu index.css */
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  /* Usamos una curva bezier para que la animación empiece rápido y termine suave (Estilo Apple) */
+  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 }

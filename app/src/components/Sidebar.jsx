@@ -17,14 +17,13 @@ export const Sidebar = () => {
   ];
 
   return (
-    <div className="w-64 h-full bg-[#0A0A0A] border-r border-white/5 flex flex-col p-4">
-      {/* Logo Nexus */}
-      <div className="mb-10 px-4 py-2 mt-4">
+    <div className="w-64 h-full bg-[#0A0A0A] border-r border-white/5 flex flex-col p-4 shadow-[10px_0_40px_rgba(0,0,0,0.5)]">
+      
+      <div className="mb-10 px-4 py-2 mt-4 hover:scale-105 transition-transform duration-500 cursor-default">
         <h2 className="text-xl font-black tracking-[0.3em] text-white italic">NEXUS</h2>
         <p className="text-[10px] text-white/40 tracking-widest font-mono">CORE SYSTEM</p>
       </div>
 
-      {/* Botones */}
       <nav className="flex-1 space-y-2">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -32,12 +31,19 @@ export const Sidebar = () => {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all ${
-                isActive ? 'bg-white text-black font-bold' : 'text-white/40 hover:text-white hover:bg-white/5'
+              // group permite que el texto y el icono reaccionen juntos al pasar el ratón
+              className={`group w-full flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 active:scale-95 ${
+                isActive 
+                  ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.2)]' 
+                  : 'text-white/40 hover:text-white hover:bg-white/5'
               }`}
             >
-              {item.icon}
-              <span className="text-sm tracking-wide">{item.label}</span>
+              <div className="transition-transform duration-300 group-hover:scale-110">
+                {item.icon}
+              </div>
+              <span className="text-sm tracking-wide transition-transform duration-300 group-hover:translate-x-1">
+                {item.label}
+              </span>
             </button>
           );
         })}

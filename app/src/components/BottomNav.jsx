@@ -17,7 +17,7 @@ export const BottomNav = () => {
   ];
 
   return (
-    <div className="bg-[#0A0A0A]/90 backdrop-blur-xl border-t border-white/10 pb-safe w-full">
+    <div className="bg-[#0A0A0A]/80 backdrop-blur-2xl border-t border-white/5 pb-safe w-full shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
       <div className="flex justify-between items-center px-4 py-3 max-w-md mx-auto">
         {navItems.map((item) => {
           const isActive = location.pathname === item.path;
@@ -25,13 +25,22 @@ export const BottomNav = () => {
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className="relative flex flex-col items-center justify-center p-2 transition-all outline-none"
+              // El active:scale-90 crea el efecto de "hundirse" al tocar el cristal
+              className="relative flex flex-col items-center justify-center p-2 transition-all duration-300 outline-none active:scale-90"
             >
-              <div className={`${isActive ? 'text-white scale-110' : 'text-white/30'} transition-all`}>
+              <div 
+                className={`transition-all duration-500 ease-out ${
+                  isActive 
+                    ? 'text-white scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' 
+                    : 'text-white/30 hover:text-white/60'
+                }`}
+              >
                 {item.icon}
               </div>
+              
+              {/* Puntito blanco que entra con zoom */}
               {isActive && (
-                <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full" />
+                <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full transition-all duration-300 animate-[fadeInUp_0.2s_ease-out]" />
               )}
             </button>
           );
