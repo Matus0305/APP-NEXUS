@@ -12,7 +12,6 @@ import { FlowModule } from './components/flow/FlowModule';
 import { PatrimonyModule } from './components/patrimony/PatrimonyModule';
 import { AlertCircle } from '@phosphor-icons/react';
 import './index.css';
-import './animations.css';
 import { triggerHaptic } from './utils/haptics';
 
 // Componente temporal para los demás
