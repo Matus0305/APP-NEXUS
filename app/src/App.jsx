@@ -7,7 +7,7 @@ import { SplashScreen } from './components/SplashScreen';
 import { SettingsModule } from './components/settings/SettingsModule';
 import { FleetManagement } from './components/fleet/FleetManagement';
 import { ShiftModule} from './components/Shift/ShiftModule';
-import { LogisticsModule} from './components/Logistics/LogisticsModule';
+import { LogisticsModule } from './components/logistics/LogisticsModule';
 
 // Componente temporal para los demás
 const DummyModule = ({ title }) => (
