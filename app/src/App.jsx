@@ -1,55 +1,58 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { HashRouter, Routes, Route } from 'react-router-dom';
 import { TopBar } from './components/TopBar';
-import { NavigationBar } from './components/NavigationBar';
+import { BottomNav } from './components/BottomNav';
+import { Sidebar } from './components/Sidebar';
 
-// Tus módulos
-import { DashboardModule } from './components/Dashboard/DashboardModule';
-import { LogisticsModule } from './components/logistics/LogisticsModule';
-import { FlowModule } from './components/flow/FlowModule';
-import { FleetManagement } from './components/fleet/FleetManagement';
-import { ShiftModule } from './components/Shift/ShiftModule';
-import { PatrimonyModule } from './components/patrimony/PatrimonyModule';
-import { SettingsModule } from './components/settings/SettingsModule';
+// Componente temporal para probar que la navegación funciona
+const DummyModule = ({ title }) => (
+  <div className="flex items-center justify-center h-full min-h-[60vh] border border-dashed border-white/10 rounded-3xl bg-white/5">
+    <h1 className="text-xl md:text-3xl text-white/50 font-mono tracking-widest uppercase">{title}</h1>
+  </div>
+);
 
 function App() {
-  // Empezamos siempre en el Dashboard
-  const [activeTab, setActiveTab] = useState('Dashboard');
-
-  // Función que decide qué módulo mostrar
-  const renderModule = () => {
-    switch (activeTab) {
-      case 'Dashboard': return <DashboardModule />;
-      case 'logistics': return <LogisticsModule />;
-      case 'flow': return <FlowModule />;
-      case 'fleet': return <FleetManagement />;
-      case 'shift': return <ShiftModule />;
-      case 'patrimony': return <PatrimonyModule />;
-      case 'settings': return <SettingsModule />;
-      default: return <DashboardModule />;
-    }
-  };
-
   return (
-    <div className="h-screen w-full bg-[#0A0A0A] text-white flex flex-col overflow-hidden">
-      
-      {/* PISO 1: TOPBAR */}
-      <header className="h-16 flex-none z-50 border-b border-white/5">
-        <TopBar />
-      </header>
-
-      {/* PISO 2: EL MÓDULO ACTIVO */}
-      <main className="flex-1 overflow-y-auto overflow-x-hidden p-4 pb-24">
-        <div className="max-w-md mx-auto h-full">
-          {renderModule()}
+    <HashRouter>
+      {/* Contenedor Maestro: Ocupa toda la pantalla, bloquea el scroll general */}
+      <div className="flex h-screen w-full bg-[#0A0A0A] text-white overflow-hidden selection:bg-white/20">
+        
+        {/* NAVEGACIÓN PC/TABLET: Visible desde pantallas medianas (md), oculto en móvil */}
+        <div className="hidden md:flex">
+          <Sidebar />
         </div>
-      </main>
 
-      {/* PISO 3: NAVEGACIÓN */}
-      <footer className="fixed bottom-0 left-0 right-0 z-50">
-         <NavigationBar activeTab={activeTab} setActiveTab={setActiveTab} />
-      </footer>
+        {/* ÁREA PRINCIPAL: Se ajusta al espacio restante */}
+        <div className="flex-1 flex flex-col min-w-0 relative">
+          
+          {/* BARRA SUPERIOR: Fecha y Hora */}
+          <header className="flex-none z-40">
+            <TopBar />
+          </header>
 
-    </div>
+          {/* ÁREA DE MÓDULOS: Aquí vivirán tus componentes reales. Tiene scroll independiente. */}
+          <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-28 md:pb-8">
+            <div className="max-w-5xl mx-auto h-full">
+              <Routes>
+                <Route path="/" element={<DummyModule title="DASHBOARD_ACTIVO" />} />
+                <Route path="/shift" element={<DummyModule title="JORNADA" />} />
+                <Route path="/fleet" element={<DummyModule title="FLOTA" />} />
+                <Route path="/flow" element={<DummyModule title="FLUJO_DE_CAJA" />} />
+                <Route path="/logistics" element={<DummyModule title="LOGÍSTICA" />} />
+                <Route path="/patrimony" element={<DummyModule title="PATRIMONIO" />} />
+                <Route path="/settings" element={<DummyModule title="AJUSTES" />} />
+              </Routes>
+            </div>
+          </main>
+
+          {/* NAVEGACIÓN MÓVIL: Visible en móvil, oculta en PC (md:hidden) */}
+          <div className="md:hidden absolute bottom-0 left-0 right-0 z-50">
+            <BottomNav />
+          </div>
+
+        </div>
+      </div>
+    </HashRouter>
   );
 }
 
