@@ -6,6 +6,18 @@
   -webkit-user-select: none;
 }
 
+/* Fuerza a que todo hijo directo de main no sea más ancho que la pantalla */
+main * {
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Si tienes tablas en Logística o Flota, esto permite que tengan scroll interno sin romper la app */
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 html, body {
   /* Fondo Nexus Carbono */
   background-color: #0A0A0A !important; 
