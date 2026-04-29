@@ -6,38 +6,46 @@ export const NavigationBar = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Mapeo exacto de tus rutas
   const navItems = [
-    { path: '/', icon: <LayoutGrid size={20} />, label: 'Home' },
-    { path: '/logistics', icon: <Truck size={20} />, label: 'Log' },
-    { path: '/flow', icon: <Wallet size={20} />, label: 'Flow' },
-    { path: '/fleet', icon: <Car size={20} />, label: 'Fleet' },
-    { path: '/shift', icon: <Clock size={20} />, label: 'Shift' },
-    { path: '/patrimony', icon: <PieChart size={20} />, label: 'Pat' },
-    { path: '/settings', icon: <Settings size={20} />, label: 'Set' },
+    { path: '/Dashboard', icon: <LayoutGrid size={24} /> },
+    { path: '/shift', icon: <Clock size={24} /> },
+    { path: '/fleet', icon: <Car size={24} /> },
+    { path: '/flow', icon: <Wallet size={24} /> },
+    { path: '/logistics', icon: <Truck size={24} /> },
+    { path: '/patrimony', icon: <PieChart size={24} /> },
+    { path: '/settings', icon: <Settings size={24} /> },
   ];
 
   return (
-    <nav className="bg-black/80 backdrop-blur-xl border-t border-white/10 pb-safe">
-      <div className="flex justify-between items-center px-2 py-3">
+    // Fondo negro translúcido con desenfoque, adaptado para el "Notch" inferior del iPhone/Android
+    <div className="bg-[#0A0A0A]/90 backdrop-blur-lg border-t border-white/10 pb-safe w-full">
+      <div className="flex justify-between items-center px-4 py-3 max-w-md mx-auto">
+        
         {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
+          // Detectamos si la ruta está activa (o si es la raíz "/")
+          const isActive = location.pathname === item.path || (item.path === '/Dashboard' && location.pathname === '/');
+          
           return (
             <button
               key={item.path}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center flex-1 transition-all ${
-                isActive ? 'text-white scale-110' : 'text-white/30'
-              }`}
+              className="relative flex flex-col items-center justify-center p-2 transition-all duration-300 outline-none"
             >
-              <div className={`${isActive ? 'bg-white/10 p-2 rounded-xl' : ''}`}>
+              {/* Ícono */}
+              <div className={`${isActive ? 'text-white scale-110' : 'text-white/30 hover:text-white/60'} transition-all`}>
                 {item.icon}
               </div>
-              {/* Solo mostramos el punto si está activo para no ocupar espacio con texto */}
-              {isActive && <div className="w-1 h-1 bg-white rounded-full mt-1" />}
+              
+              {/* Punto indicador de activo (solo aparece si estás en esa pantalla) */}
+              {isActive && (
+                <div className="absolute -bottom-1 w-1 h-1 bg-white rounded-full animate-in zoom-in" />
+              )}
             </button>
           );
         })}
+
       </div>
-    </nav>
+    </div>
   );
 };
