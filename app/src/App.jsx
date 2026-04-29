@@ -7,7 +7,7 @@ import { SplashScreen } from './components/SplashScreen';
 import { SettingsModule } from './components/settings/SettingsModule';
 import { FleetManagement } from './components/fleet/FleetManagement';
 import { ShiftModule} from './components/Shift/ShiftModule';
-import { LogisticModule} from './components/Logistic/LogisticModule';
+import { LogisticsModule} from './components/Logistics/LogisticsModule';
 
 // Componente temporal para los demás
 const DummyModule = ({ title }) => (
@@ -35,7 +35,7 @@ const MainContent = () => {
             <Route path="/shift" element={<ShiftModule />} />
             <Route path="/fleet" element={<FleetManagement />} />
             <Route path="/flow" element={<DummyModule title="MÓDULO_FLUJO_CAJA" />} />
-            <Route path="/logistics" element={<LogisticModule />} />
+            <Route path="/logistics" element={<LogisticsModule />} />
             <Route path="/patrimony" element={<DummyModule title="MÓDULO_PATRIMONIO" />} />
             <Route path="/settings" element={<SettingsModule />} />
           </Routes>
