@@ -25,8 +25,13 @@ const Placeholder = ({ title }) => (
 
 function App() {
 return (
-  <div className="bg-black min-h-screen text-white pb-24"> {/* pb-24 para que la nav no tape el contenido */}
-    {renderModule()} {/* Aquí renderizas el módulo activo según el estado */}
+  <div className="bg-black min-h-screen text-white overflow-x-hidden">
+    {/* Área de contenido con margen inferior para que la nav no tape nada */}
+    <main className="pb-20 pt-4 px-4 max-w-md mx-auto"> 
+      {renderModule()} 
+    </main>
+
+    {/* Barra fija abajo */}
     <Navigation currentTab={activeTab} setTab={setActiveTab} />
   </div>
 );
