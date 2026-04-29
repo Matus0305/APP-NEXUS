@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { LayoutGrid, Truck, Wallet, Car, Clock, PieChart, Settings } from 'lucide-react';
+import { triggerHaptic } from '../utils/haptics';
 
 export const BottomNav = () => {
   const navigate = useNavigate();
@@ -24,7 +25,10 @@ export const BottomNav = () => {
           return (
             <button
               key={item.path}
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                triggerHaptic('light'); 
+                navigate(item.path);
+              }}
               // El active:scale-90 crea el efecto de "hundirse" al tocar el cristal
               className="relative flex flex-col items-center justify-center p-2 transition-all duration-300 outline-none active:scale-90"
             >

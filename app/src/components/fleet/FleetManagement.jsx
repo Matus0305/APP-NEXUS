@@ -146,7 +146,6 @@ export const FleetManagement = () => {
                   onClick={() => setSelectedAsset(v)} 
                   className="group bg-[#0A0A0A]/40 backdrop-blur-2xl border border-white/5 rounded-4xl hover:bg-white/5 transition-all duration-500 cursor-pointer hover:border-white/20 active:scale-[0.98] shadow-2xl flex flex-col min-h-64 overflow-hidden relative"
                 >
-                  {/* Imagen con Zoom Hover */}
                   <div className="w-full h-40 relative overflow-hidden">
                       <img 
                         src={v.imagen_url || DEFAULT_CAR_IMAGE} 
@@ -156,7 +155,6 @@ export const FleetManagement = () => {
                       <div className="absolute inset-0 bg-linear-to-t from-[#0A0A0A]/90 via-[#0A0A0A]/40 to-transparent"></div>
                   </div>
 
-                  {/* Datos de la Tarjeta */}
                   <div className="p-6 pt-0 flex flex-col flex-1 relative z-10">
                     <div className="mb-6 -mt-6">
                       <h3 className="text-2xl font-bold tracking-tighter text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
@@ -186,7 +184,6 @@ export const FleetManagement = () => {
       {selectedAsset && (
         <div className="animate-in slide-in-from-right-8 fade-in duration-500 w-full space-y-6">
           
-          {/* Cabecera / Imagen */}
           <div className="relative w-full h-64 md:h-80 rounded-4xl overflow-hidden border border-white/10 shadow-2xl shrink-0">
             <div className="absolute top-4 left-4 right-4 z-20 flex justify-between">
               <button 
@@ -211,7 +208,6 @@ export const FleetManagement = () => {
             />
             <div className="absolute inset-0 bg-linear-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"></div>
             
-            {/* Título flotando sobre la imagen */}
             <div className="absolute bottom-6 left-6 md:left-10 z-20">
               <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]">
                 {selectedAsset.marca} <span className="text-white/60">{selectedAsset.modelo}</span>
@@ -318,7 +314,6 @@ export const FleetManagement = () => {
             </div>
 
             <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 md:p-8 hover:bg-white/2 transition-colors duration-500 relative overflow-hidden group">
-              {/* Glow sutil en el fondo de esta tarjeta */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-white/10 transition-all duration-700" />
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mb-2">Reserva Mensual (Mtto)</p>
               <p className="text-4xl md:text-5xl font-mono font-medium text-white tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
@@ -334,13 +329,25 @@ export const FleetManagement = () => {
         </div>
       )}
 
-      {/* MODAL DE EDICIÓN/CREACIÓN */}
+      {/* MODAL DE EDICIÓN/CREACIÓN (ESTILO BOTTOM SHEET) */}
       {formMode && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-2xl p-4 overflow-y-auto py-10 animate-in fade-in duration-300">
-          <div className="w-full max-w-3xl bg-[#050505] border border-white/10 rounded-[2.5rem] p-6 md:p-10 shadow-2xl relative animate-in zoom-in-95 duration-500 my-auto">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-md p-0 md:p-4 overflow-hidden animate-in fade-in duration-300">
+          
+          {/* Fondo interactivo para cerrar */}
+          <div className="absolute inset-0" onClick={() => setFormMode(null)}></div>
+
+          {/* Tarjeta modal con entrada desde abajo */}
+          <div className="w-full max-w-3xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-in slide-in-from-bottom-full md:zoom-in-95 duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] max-h-[90dvh] overflow-y-auto z-10 pb-32 md:pb-10">
+            
+            {/* Barra indicadora de arrastre (Móvil) */}
+            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8 md:hidden"></div>
+
             <button 
-              onClick={() => setFormMode(null)} 
-              className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-all active:scale-90"
+              onClick={() => {
+                import('../../utils/haptics').then(m => m.triggerHaptic('light'));
+                setFormMode(null);
+              }} 
+              className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-all active:scale-90 hidden md:block"
             >
               <X size={20} />
             </button>
@@ -354,7 +361,6 @@ export const FleetManagement = () => {
 
             <form onSubmit={handleSaveVehicle} className="space-y-6">
               
-              {/* Sección de Imagen */}
               <div className="bg-black/40 p-5 rounded-3xl border border-white/5 space-y-4">
                 <div className="flex items-center gap-2">
                   <ImageIcon size={14} className="text-white/60" />
@@ -363,7 +369,6 @@ export const FleetManagement = () => {
                 <Input label="URL de Imagen del Vehículo" placeholder="Pega el enlace de la foto aquí..." value={formData.imagen_url} onChange={e => setFormData({...formData, imagen_url: e.target.value})} />
               </div>
 
-              {/* Identidad */}
               <div className="space-y-4 pt-4">
                 <div className="flex items-center gap-2 border-b border-white/5 pb-2">
                   <Car size={14} className="text-white/40" />
@@ -380,7 +385,6 @@ export const FleetManagement = () => {
                 </div>
               </div>
 
-              {/* Mecánica */}
               <div className="space-y-4 pt-4">
                 <div className="flex items-center gap-2 border-b border-white/5 pb-2">
                   <Settings2 size={14} className="text-white/40" />
@@ -399,7 +403,6 @@ export const FleetManagement = () => {
                 </div>
               </div>
 
-              {/* Documentación */}
               <div className="space-y-4 pt-4">
                 <div className="flex items-center gap-2 border-b border-white/5 pb-2">
                   <Shield size={14} className="text-white/40" />
@@ -411,12 +414,14 @@ export const FleetManagement = () => {
                 </div>
               </div>
 
-              {/* Controles del Formulario */}
               <div className="pt-8 flex justify-between gap-4">
                 {formMode === 'edit' && (
                   <button 
                     type="button" 
-                    onClick={() => setIsDeleting(true)} 
+                    onClick={() => {
+                      import('../../utils/haptics').then(m => m.triggerHaptic('heavy'));
+                      setIsDeleting(true);
+                    }} 
                     className="px-6 py-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white font-black uppercase tracking-widest text-[11px] rounded-2xl border border-red-500/20 transition-all active:scale-95"
                   >
                     Eliminar
@@ -425,6 +430,7 @@ export const FleetManagement = () => {
                 <button 
                   type="submit" 
                   disabled={isSubmitting} 
+                  onClick={() => import('../../utils/haptics').then(m => m.triggerHaptic('medium'))}
                   className="flex-1 py-4 bg-white text-black hover:bg-neutral-200 font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50"
                 >
                   {isSubmitting ? 'Procesando...' : 'Guardar y Sincronizar'}
@@ -468,7 +474,6 @@ export const FleetManagement = () => {
 
 // Subcomponente de Input perfeccionado
 const Input = ({ label, type = "text", value, ...props }) => {
-  // Verificamos si es un input de número para aplicarle la fuente 'mono'
   const isNumber = type === 'number' || label.includes('($)') || label.includes('(Millas)');
   
   return (

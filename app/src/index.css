@@ -94,4 +94,26 @@ input, select, textarea {
   animation: loading-bar 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
+/* 1. ELIMINAR EL REBOTE (Overscroll) DEL NAVEGADOR */
+html, body {
+  overscroll-behavior-y: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 2. BARRAS DE SCROLL ESTILO macOS (Invisibles hasta que las usas) */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
 }
