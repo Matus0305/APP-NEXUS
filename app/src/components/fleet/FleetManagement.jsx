@@ -331,22 +331,19 @@ export const FleetManagement = () => {
 
       {/* MODAL DE EDICIÓN/CREACIÓN (ESTILO BOTTOM SHEET) */}
       {formMode && (
-        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-md p-0 md:p-4 overflow-hidden animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-md p-0 md:p-4 overflow-hidden">
           
           {/* Fondo interactivo para cerrar */}
           <div className="absolute inset-0" onClick={() => setFormMode(null)}></div>
 
-          {/* Tarjeta modal con entrada desde abajo */}
-          <div className="w-full max-w-3xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-in slide-in-from-bottom-full md:zoom-in-95 duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] max-h-[90dvh] overflow-y-auto z-10 pb-32 md:pb-10">
+          {/* AQUÍ ESTÁ LA MAGIA: animate-slide-up-sheet */}
+          <div className="w-full max-w-3xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-slide-up-sheet max-h-[90dvh] overflow-y-auto z-10 pb-32 md:pb-10">
             
             {/* Barra indicadora de arrastre (Móvil) */}
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8 md:hidden"></div>
 
             <button 
-              onClick={() => {
-                import('../../utils/haptics').then(m => m.triggerHaptic('light'));
-                setFormMode(null);
-              }} 
+              onClick={() => setFormMode(null)} 
               className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-all active:scale-90 hidden md:block"
             >
               <X size={20} />

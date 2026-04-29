@@ -116,4 +116,19 @@ html, body {
   background: rgba(255, 255, 255, 0.3);
 }
 
+@keyframes slideUpSheet {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up-sheet {
+  animation: slideUpSheet 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
+}
+
 }
