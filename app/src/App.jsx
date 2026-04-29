@@ -10,9 +10,6 @@ import { ShiftModule} from './components/Shift/ShiftModule';
 import { LogisticsModule } from './components/logistics/LogisticsModule';
 import { FlowModule } from './components/flow/FlowModule';
 import { PatrimonyModule } from './components/patrimony/PatrimonyModule';
-import { AlertCircle } from '@phosphor-icons/react';
-import './index.css';
-import { triggerHaptic } from './utils/haptics';
 
 // Componente temporal para los demás
 const DummyModule = ({ title }) => (
