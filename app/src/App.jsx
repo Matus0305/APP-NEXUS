@@ -6,7 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { SplashScreen } from './components/SplashScreen';
 import { SettingsModule } from './components/settings/SettingsModule';
 import { FleetManagement } from './components/fleet/FleetManagement';
-
+import { ShiftModule} from './components/Shift/ShiftModule';
 // Componente temporal para los demás
 const DummyModule = ({ title }) => (
   <div className="flex items-center justify-center h-full min-h-[60vh] border border-dashed border-white/10 rounded-[2.5rem] bg-white/5 transition-all duration-500">
@@ -30,7 +30,7 @@ const MainContent = () => {
         <div key={location.pathname} className="max-w-5xl mx-auto h-full animate-fade-in-up">
           <Routes>
             <Route path="/" element={<DummyModule title="DASHBOARD_ACTIVO" />} />
-            <Route path="/shift" element={<DummyModule title="MÓDULO_JORNADA" />} />
+            <Route path="/shift" element={<ShiftModule />} />
             <Route path="/fleet" element={<FleetManagement />} />
             <Route path="/flow" element={<DummyModule title="MÓDULO_FLUJO_CAJA" />} />
             <Route path="/logistics" element={<DummyModule title="MÓDULO_LOGÍSTICA" />} />
