@@ -26,7 +26,8 @@ const MainContent = () => {
         <TopBar />
       </header>
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 pb-24 md:pb-8">
+      {/* Añadimos pt-24 en móvil y md:pt-28 en PC para empujar el contenido por debajo de la barra */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 pt-24 md:pt-28 pb-24 md:pb-8">
         <div key={location.pathname} className="max-w-5xl mx-auto h-full animate-fade-in-up">
           <Routes>
             <Route path="/" element={<DummyModule title="DASHBOARD_ACTIVO" />} />
@@ -53,9 +54,9 @@ function App() {
       {showSplash && <SplashScreen onFinish={() => setShowSplash(false)} />}
       
       <HashRouter>
-        <div className="flex h-[100dvh] w-full bg-[#0A0A0A] text-white overflow-hidden selection:bg-white/20 relative">
+        <div className="flex h-dvh w-full bg-[#0A0A0A] text-white overflow-hidden selection:bg-white/20 relative">
           
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-white/[0.03] rounded-[100%] blur-[120px] pointer-events-none z-0"></div>
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-150 bg-white/3 rounded-[100%] blur-[120px] pointer-events-none z-0"></div>
 
           <div className="hidden md:flex z-50">
             <Sidebar />
@@ -63,7 +64,7 @@ function App() {
 
           <MainContent />
 
-          <div className="md:hidden fixed bottom-0 left-0 w-full z-[100]">
+          <div className="md:hidden fixed bottom-0 left-0 w-full z-100">
             <BottomNav />
           </div>
         </div>

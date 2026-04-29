@@ -90,7 +90,8 @@ input, select, textarea {
 }
 
 .animate-loading-bar {
-  animation: loading-bar 2s ease-in-out forwards;
+  /* Cambiamos 2s por 1s y le damos una curva más agresiva */
+  animation: loading-bar 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 }
