@@ -49,9 +49,10 @@ export const FlowModule = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // AÑADIDO: cashback_acumulado en el estado inicial
   const initialAccountState = {
     nombre_cuenta: '', tipo: 'Efectivo', banco: 'Efectivo', ultimos_digitos: '', color_tarjeta: '#10b981',
-    saldo_actual: '', limite_credito: '', tasa_rendimiento: '', reglas_cashback: '', fecha_corte: '', fecha_pago: ''
+    saldo_actual: '', limite_credito: '', tasa_rendimiento: '', reglas_cashback: '', fecha_corte: '', fecha_pago: '', cashback_acumulado: ''
   };
   const [accountForm, setAccountForm] = useState(initialAccountState);
   const [movForm, setMovForm] = useState({ tipo: 'Egreso', monto: '', descripcion: '', porcentaje_cashback: '' });
@@ -89,6 +90,7 @@ export const FlowModule = () => {
         saldo_actual: parseFloat(accountForm.saldo_actual) || 0,
         limite_credito: parseFloat(accountForm.limite_credito) || 0,
         tasa_rendimiento: parseFloat(accountForm.tasa_rendimiento) || 0,
+        cashback_acumulado: parseFloat(accountForm.cashback_acumulado) || 0, // AÑADIDO
         fecha_corte: accountForm.fecha_corte ? parseInt(accountForm.fecha_corte) : null,
         fecha_pago: accountForm.fecha_pago ? parseInt(accountForm.fecha_pago) : null,
       };
@@ -149,17 +151,14 @@ export const FlowModule = () => {
       const origen = cuentas.find(c => c.id === transferForm.origen_id);
       const destino = cuentas.find(c => c.id === transferForm.destino_id);
 
-      // 1. Registro de salida en origen
       await supabase.from('nexus_movimientos').insert([{
         tipo: 'Egreso', monto: monto, descripcion: `[TRANSF] A ${destino.nombre_cuenta}`, cuenta_id: origen.id
       }]);
       
-      // 2. Registro de entrada en destino
       await supabase.from('nexus_movimientos').insert([{
         tipo: 'Ingreso', monto: monto, descripcion: `[TRANSF] DESDE ${origen.nombre_cuenta}`, cuenta_id: destino.id
       }]);
 
-      // 3. Actualizar saldos (Considerando lógica de Crédito vs Débito/Efectivo)
       const nuevoSaldoOrigen = origen.tipo === 'Crédito' ? Number(origen.saldo_actual) + monto : Number(origen.saldo_actual) - monto;
       const nuevoSaldoDestino = destino.tipo === 'Crédito' ? Number(destino.saldo_actual) - monto : Number(destino.saldo_actual) + monto;
 
@@ -170,7 +169,6 @@ export const FlowModule = () => {
       setShowTransferForm(false);
       setTransferForm({ origen_id: '', destino_id: '', monto: '', descripcion: '' });
       refetchCuentas();
-      alert("Transferencia exitosa");
     } catch (err) { alert(err.message); } 
     finally { setIsSubmitting(false); }
   };
@@ -222,24 +220,17 @@ export const FlowModule = () => {
       {/* VISTA 1: LISTADO DE CUENTAS */}
       {!selectedAccount && (
         <div className="max-w-6xl mx-auto space-y-8 animate-in slide-in-from-bottom-8 duration-500">
-          
           <header className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/5 pb-8 gap-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">BILLETERA</h1>
-              <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Centro de Mando de Liquidez</p>
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Gestor de Activos</p>
             </div>
             <div className="flex gap-3 w-full md:w-auto">
-                <button 
-                onClick={() => { triggerHaptic('light'); setShowTransferForm(true); }} 
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white/5 text-white px-6 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 active:scale-95 transition-all"
-                >
-                <ArrowRightLeft size={16} strokeWidth={3} /> Transferir
+                <button onClick={() => { triggerHaptic('light'); setShowTransferForm(true); }} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white/5 text-white px-6 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 active:scale-95 transition-all">
+                  <ArrowRightLeft size={16} strokeWidth={3} /> Transferir
                 </button>
-                <button 
-                onClick={() => { triggerHaptic('light'); setShowAccountForm(true); }} 
-                className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-black px-6 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.2)]"
-                >
-                <Plus size={16} strokeWidth={3} /> Nuevo Activo
+                <button onClick={() => { triggerHaptic('light'); setShowAccountForm(true); }} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-black px-6 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.2)]">
+                  <Plus size={16} strokeWidth={3} /> Nuevo activo
                 </button>
             </div>
           </header>
@@ -247,14 +238,14 @@ export const FlowModule = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px] -mr-10 -mt-10" />
-              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mb-2 relative z-10">Liquidez Real</p>
+              <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mb-2 relative z-10">Liquidez</p>
               <p className={`text-4xl font-mono font-bold tracking-tighter text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)] relative z-10 ${privacyClass}`}>
                 ${liquidezTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}
               </p>
             </div>
             <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[50px] -mr-10 -mt-10" />
-              <p className="text-[10px] text-red-400 font-black uppercase tracking-widest mb-2 relative z-10">Deuda Comprometida</p>
+              <p className="text-[10px] text-red-400 font-black uppercase tracking-widest mb-2 relative z-10">Deuda Actual</p>
               <p className={`text-4xl font-mono font-bold text-white tracking-tighter relative z-10 ${privacyClass}`}>
                 ${deudaTotal.toLocaleString(undefined, {minimumFractionDigits: 2})}
               </p>
@@ -262,7 +253,7 @@ export const FlowModule = () => {
           </div>
 
           <div className="flex gap-2 p-1.5 bg-[#0A0A0A]/60 backdrop-blur-xl border border-white/5 rounded-2xl w-full overflow-x-auto hide-scrollbar">
-            {['Efectivo', 'Ahorro', 'Crédito', 'Débito'].map(tab => (
+            {['Efectivo', 'Cuenta', 'Crédito', 'Débito'].map(tab => (
               <button 
                 key={tab} 
                 onClick={() => { triggerHaptic('light'); setActiveTab(tab); }} 
@@ -294,7 +285,7 @@ export const FlowModule = () => {
                     </div>
                     <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl">
                       {c.tipo === 'Efectivo' ? <Banknote size={20} className="text-white" /> : 
-                       c.tipo === 'Ahorro' ? <PiggyBank size={20} className="text-white" /> : 
+                       c.tipo === 'Cuenta' ? <PiggyBank size={20} className="text-white" /> : 
                        <CreditCard size={20} className="text-white" />}
                     </div>
                   </div>
@@ -306,7 +297,7 @@ export const FlowModule = () => {
                         ${Number(c.saldo_actual).toLocaleString(undefined, {minimumFractionDigits: 2})}
                       </p>
                       <p className="text-[10px] font-mono text-white/50 tracking-widest bg-black/40 px-3 py-1.5 rounded-lg border border-white/10">
-                        {c.tipo === 'Efectivo' ? 'CASH' : (c.tipo === 'Ahorro' ? c.ultimos_digitos : (c.ultimos_digitos ? `•••• ${c.ultimos_digitos}` : ''))}
+                        {c.tipo === 'Efectivo' ? 'CASH' : (c.tipo === 'Cuenta' ? c.ultimos_digitos : (c.ultimos_digitos ? `•••• ${c.ultimos_digitos}` : ''))}
                       </p>
                     </div>
                   </div>
@@ -322,7 +313,7 @@ export const FlowModule = () => {
         <div className="animate-in slide-in-from-right-8 duration-500 max-w-4xl mx-auto space-y-6">
           <div className="flex justify-between items-center mb-4">
             <button onClick={() => { triggerHaptic('light'); setSelectedAccount(null); }} className="flex items-center text-[10px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-5 py-3 rounded-2xl border border-white/5 active:scale-95">
-              <ArrowLeft size={14} className="mr-2"/> Bóveda
+              <ArrowLeft size={14} className="mr-2"/> Billetera
             </button>
             <button onClick={() => { triggerHaptic('heavy'); setIsDeleting(true); }} className="p-3 bg-red-500/10 text-red-500 rounded-2xl border border-red-500/20 hover:bg-red-500 hover:text-white transition-all active:scale-90">
               <Trash2 size={16} />
@@ -334,7 +325,7 @@ export const FlowModule = () => {
             <div className="z-10">
               <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-xl">{selectedAccount.nombre_cuenta}</h2>
               <p className="text-[10px] font-mono text-white/60 tracking-[0.3em] uppercase mt-2">
-                {selectedAccount.banco} {selectedAccount.tipo === 'Efectivo' ? '' : (selectedAccount.tipo === 'Ahorro' ? selectedAccount.ultimos_digitos : (selectedAccount.ultimos_digitos ? `• •••• ${selectedAccount.ultimos_digitos}` : ''))}
+                {selectedAccount.banco} {selectedAccount.tipo === 'Efectivo' ? '' : (selectedAccount.tipo === 'Cuenta' ? selectedAccount.ultimos_digitos : (selectedAccount.ultimos_digitos ? `• •••• ${selectedAccount.ultimos_digitos}` : ''))}
               </p>
             </div>
             <div className="z-10">
@@ -346,8 +337,8 @@ export const FlowModule = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {selectedAccount.tipo === 'Ahorro' && (
-              <StatsCard title="Rendimiento (TEA)" amount={selectedAccount.tasa_rendimiento ? `${selectedAccount.tasa_rendimiento}%` : '--'} icon={<TrendingUp size={16}/>} color="text-emerald-400" />
+            {selectedAccount.tipo === 'Cuenta' && (
+              <StatsCard title="Rendimiento Anual" amount={selectedAccount.tasa_rendimiento ? `${selectedAccount.tasa_rendimiento}%` : '--'} icon={<TrendingUp size={16}/>} color="text-emerald-400" />
             )}
             {(selectedAccount.tipo === 'Crédito' || selectedAccount.tipo === 'Débito') && (
               <StatsCard 
@@ -420,9 +411,7 @@ export const FlowModule = () => {
         </div>
       )}
 
-      {/* ========================================== */}
-      {/* MODAL: TRANSFERENCIA (NUEVO) */}
-      {/* ========================================== */}
+      {/* MODAL: TRANSFERENCIA */}
       {showTransferForm && (
         <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm p-0 pt-20 md:p-4 overflow-hidden">
           <div className="absolute inset-0" onClick={() => setShowTransferForm(false)}></div>
@@ -458,9 +447,7 @@ export const FlowModule = () => {
         </div>
       )}
 
-      {/* ========================================== */}
-      {/* MODAL: NUEVO ACTIVO (ACTUALIZADO CON EFECTIVO) */}
-      {/* ========================================== */}
+      {/* MODAL: NUEVO ACTIVO FINANCIERO */}
       {showAccountForm && (
         <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 pt-20 md:p-4 overflow-hidden">
           <div className="absolute inset-0" onClick={() => setShowAccountForm(false)}></div>
@@ -484,9 +471,9 @@ export const FlowModule = () => {
                       });
                   }} className="w-full bg-white/5 border border-white/5 text-white font-medium p-4 rounded-2xl focus:border-white/30 outline-none appearance-none transition-all">
                     <option className="bg-black" value="Efectivo">Efectivo (Cash)</option>
-                    <option className="bg-black" value="Ahorro">Cta. Ahorro</option>
-                    <option className="bg-black" value="Crédito">T. Crédito</option>
-                    <option className="bg-black" value="Débito">T. Débito</option>
+                    <option className="bg-black" value="Cuenta">Cuenta</option>
+                    <option className="bg-black" value="Crédito">Tarjeta de crédito</option>
+                    <option className="bg-black" value="Débito">Tarjeta de débito</option>
                   </select>
                 </div>
                 
@@ -500,9 +487,9 @@ export const FlowModule = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
                     <Input label="Institución / Banco" placeholder="Ej. Banco Agrícola" value={accountForm.banco} onChange={e => setAccountForm({...accountForm, banco: e.target.value})} required />
                     <Input 
-                    label={accountForm.tipo === 'Ahorro' ? 'Nº de Cuenta Completo' : 'Últimos 4 Dígitos'} 
-                    placeholder={accountForm.tipo === 'Ahorro' ? 'Ej. 0000012345678' : '4567'} 
-                    maxLength={accountForm.tipo === 'Ahorro' ? '30' : '4'} 
+                    label={accountForm.tipo === 'Cuenta' ? 'Nº de Cuenta Completo' : 'Últimos 4 Dígitos'} 
+                    placeholder={accountForm.tipo === 'Cuenta' ? 'Ej. 0000012345678' : '4567'} 
+                    maxLength={accountForm.tipo === 'Cuenta' ? '30' : '4'} 
                     value={accountForm.ultimos_digitos} 
                     onChange={e => setAccountForm({...accountForm, ultimos_digitos: e.target.value})} 
                     />
@@ -511,21 +498,39 @@ export const FlowModule = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-white/5 bg-white/5 p-5 rounded-4xl">
                 <div className="space-y-1.5">
-                  <label className="text-[9px] text-emerald-400 font-black uppercase tracking-widest ml-1">Saldo de Apertura ($)</label>
+                  <label className="text-[9px] text-emerald-400 font-black uppercase tracking-widest ml-1">
+                    {accountForm.tipo === 'Crédito' ? 'Deuda Inicial ($)' : 'Saldo de Apertura ($)'}
+                  </label>
                   <input type="number" step="0.01" required value={accountForm.saldo_actual} onChange={e => setAccountForm({...accountForm, saldo_actual: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all placeholder:text-white/10" placeholder="0.00"/>
                 </div>
 
-                {accountForm.tipo === 'Crédito' ? (
+                {accountForm.tipo === 'Crédito' && (
                   <div className="space-y-1.5">
                     <label className="text-[9px] text-cyan-400 font-black uppercase tracking-widest ml-1">Límite Autorizado ($)</label>
                     <input type="number" step="0.01" value={accountForm.limite_credito} onChange={e => setAccountForm({...accountForm, limite_credito: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-cyan-400/50 outline-none transition-all placeholder:text-white/10" placeholder="0.00"/>
                   </div>
-                ) : accountForm.tipo === 'Ahorro' ? (
+                )}
+                
+                {accountForm.tipo === 'Cuenta' && (
                   <div className="space-y-1.5">
                     <label className="text-[9px] text-emerald-400 font-black uppercase tracking-widest ml-1">Rendimiento Anual (TEA %)</label>
                     <input type="number" step="0.1" value={accountForm.tasa_rendimiento} onChange={e => setAccountForm({...accountForm, tasa_rendimiento: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all placeholder:text-white/10" placeholder="3.5"/>
                   </div>
-                ) : null}
+                )}
+
+                {(accountForm.tipo === 'Crédito' || accountForm.tipo === 'Débito') && (
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] text-purple-400 font-black uppercase tracking-widest ml-1">Cashback Acumulado ($)</label>
+                    <input type="number" step="0.01" value={accountForm.cashback_acumulado} onChange={e => setAccountForm({...accountForm, cashback_acumulado: e.target.value})} className="w-full bg-black/40 border border-purple-500/20 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-purple-400/50 outline-none transition-all placeholder:text-purple-400/30" placeholder="0.00"/>
+                  </div>
+                )}
+
+                {accountForm.tipo === 'Crédito' && (
+                  <>
+                    <Input label="Día de Corte (Ej. 15)" type="number" min="1" max="31" value={accountForm.fecha_corte} onChange={e => setAccountForm({...accountForm, fecha_corte: e.target.value})} placeholder="15" />
+                    <Input label="Día Límite Pago (Ej. 5)" type="number" min="1" max="31" value={accountForm.fecha_pago} onChange={e => setAccountForm({...accountForm, fecha_pago: e.target.value})} placeholder="5" />
+                  </>
+                )}
               </div>
 
               <button type="submit" disabled={isSubmitting} className="w-full py-6 mt-6 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-4xl active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.2)]">
@@ -536,21 +541,16 @@ export const FlowModule = () => {
         </div>
       )}
 
-      {/* MODALES EXISTENTES (EGRESO/ELIMINACIÓN) SE MANTIENEN IGUAL... */}
-      {/* (Se asumen incluidos según el código original del usuario) */}
+      {/* MODAL: REGISTRO DE FLUJO (TRANSACCIONES) */}
       {showMovForm && (
-          /* ... Contenido del showMovForm original del usuario ... */
-          <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 pt-20 md:p-4 overflow-hidden">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 pt-20 md:p-4 overflow-hidden">
           <div className="absolute inset-0" onClick={() => { triggerHaptic('light'); setShowMovForm(false); }}></div>
           <div className="w-full max-w-md bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-slide-up-sheet max-h-[75vh] overflow-y-auto z-10 pb-16 md:pb-10 hide-scrollbar">
-            
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
             <button onClick={() => { triggerHaptic('light'); setShowMovForm(false); }} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block active:scale-90"><X size={20} /></button>
-            
             <h2 className="text-3xl font-black tracking-tighter text-white mb-6">Registro de Flujo</h2>
             
             <form onSubmit={handleSaveMovement} className="space-y-6">
-              
               <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/5">
                 <button type="button" onClick={() => { triggerHaptic('light'); setMovForm({...movForm, tipo: 'Egreso'}); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${movForm.tipo === 'Egreso' ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'text-white/40'}`}>
                   Gasto / Salida
@@ -585,6 +585,7 @@ export const FlowModule = () => {
         </div>
       )}
 
+      {/* MODAL DE ELIMINACIÓN */}
       {isDeleting && (
         <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
           <div className="p-10 bg-[#050505] border border-red-500/20 rounded-[3rem] space-y-6 w-full max-w-sm shadow-2xl text-center animate-in zoom-in-95">

@@ -9,8 +9,8 @@ export const Sidebar = () => {
   const navItems = [
     { path: '/', label: 'Dashboard', icon: <LayoutGrid size={20} /> },
     { path: '/shift', label: 'Jornada', icon: <Clock size={20} /> },
-    { path: '/fleet', label: 'Flota', icon: <Car size={20} /> },
-    { path: '/flow', label: 'Caja', icon: <Wallet size={20} /> },
+    { path: '/fleet', label: 'Garaje', icon: <Car size={20} /> },
+    { path: '/flow', label: 'Billetera', icon: <Wallet size={20} /> },
     { path: '/logistics', label: 'Logística', icon: <Truck size={20} /> },
     { path: '/patrimony', label: 'Patrimonio', icon: <PieChart size={20} /> },
     { path: '/settings', label: 'Ajustes', icon: <Settings size={20} /> },
