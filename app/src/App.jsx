@@ -45,11 +45,16 @@ function App() {
   return (
     <HashRouter>
       <div className="flex h-dvh w-full bg-[#0A0A0A] text-white overflow-hidden selection:bg-white/20 relative">
+        
+        {/* LUZ AMBIENTAL VOLUMÉTRICA (El toque maestro) */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-200 h-150 bg-white/3 rounded-[100%] blur-[120px] pointer-events-none z-0"></div>
+
         {/* NAVEGACIÓN PC/TABLET */}
         <div className="hidden md:flex z-50">
           <Sidebar />
         </div>
 
+        {/* ... (mantén el MainContent y el BottomNav exactamente igual que antes) */}
         {/* ÁREA PRINCIPAL ANIMADA */}
         <MainContent />
 

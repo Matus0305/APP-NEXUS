@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
 :root {
   /* Evita que el usuario pueda seleccionar texto accidentalmente al tocar botones o tarjetas */
   user-select: none;
