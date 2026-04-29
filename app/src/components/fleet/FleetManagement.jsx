@@ -144,7 +144,7 @@ export const FleetManagement = () => {
                 <div 
                   key={v.id} 
                   onClick={() => setSelectedAsset(v)} 
-                  className="group bg-[#0A0A0A]/40 backdrop-blur-2xl border border-white/5 rounded-4xl hover:bg-white/5 transition-all duration-500 cursor-pointer hover:border-white/20 active:scale-[0.98] shadow-2xl flex flex-col min-h-64 overflow-hidden relative"
+                  className="group bg-[#0A0A0A]/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] hover:bg-white/5 transition-all duration-500 cursor-pointer hover:border-white/20 active:scale-[0.98] shadow-2xl flex flex-col min-h-[16rem] overflow-hidden relative"
                 >
                   {/* Imagen con Zoom Hover */}
                   <div className="w-full h-40 relative overflow-hidden">
@@ -153,7 +153,7 @@ export const FleetManagement = () => {
                         alt={v.modelo} 
                         className="w-full h-full object-cover opacity-50 group-hover:opacity-80 group-hover:scale-110 transition-all duration-700 ease-out"
                       />
-                      <div className="absolute inset-0 bg-linear-to-t from-[#0A0A0A]/90 via-[#0A0A0A]/40 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A]/90 via-[#0A0A0A]/40 to-transparent"></div>
                   </div>
 
                   {/* Datos de la Tarjeta */}
@@ -187,7 +187,7 @@ export const FleetManagement = () => {
         <div className="animate-in slide-in-from-right-8 fade-in duration-500 w-full space-y-6">
           
           {/* Cabecera / Imagen */}
-          <div className="relative w-full h-64 md:h-80 rounded-4xl overflow-hidden border border-white/10 shadow-2xl shrink-0">
+          <div className="relative w-full h-64 md:h-80 rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl shrink-0">
             <div className="absolute top-4 left-4 right-4 z-20 flex justify-between">
               <button 
                 onClick={() => setSelectedAsset(null)}
@@ -209,7 +209,7 @@ export const FleetManagement = () => {
               alt={selectedAsset.modelo} 
               className="w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-linear-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"></div>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"></div>
             
             {/* Título flotando sobre la imagen */}
             <div className="absolute bottom-6 left-6 md:left-10 z-20">
@@ -230,7 +230,7 @@ export const FleetManagement = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
             
             {/* MANTENIMIENTO PREVENTIVO */}
-            <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 md:p-8 hover:bg-white/2 transition-colors duration-500">
+            <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-white/[0.02] transition-colors duration-500">
               <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
                 <div className="p-2 bg-white/5 rounded-xl"><Wrench size={16} className="text-white"/></div>
                 <h3 className="text-[11px] text-white/60 uppercase font-black tracking-widest">Mantenimiento Preventivo</h3>
@@ -270,7 +270,7 @@ export const FleetManagement = () => {
             </div>
 
             {/* DOCUMENTACIÓN */}
-            <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 md:p-8 hover:bg-white/2 transition-colors duration-500">
+            <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-white/[0.02] transition-colors duration-500">
               <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
                 <div className="p-2 bg-white/5 rounded-xl"><FileText size={16} className="text-white"/></div>
                 <h3 className="text-[11px] text-white/60 uppercase font-black tracking-widest">Documentación Legal</h3>
@@ -306,7 +306,7 @@ export const FleetManagement = () => {
             </div>
 
             {/* FINANZAS Y PATRIMONIO */}
-            <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 md:p-8 hover:bg-white/2 transition-colors duration-500">
+            <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-white/[0.02] transition-colors duration-500">
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mb-2">Patrimonio del Activo</p>
               <p className="text-4xl md:text-5xl font-mono font-medium text-white tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
                 ${((selectedAsset.precio_compra || 0) - ((selectedAsset.millaje_actual || 0) * (((selectedAsset.precio_compra || 0) - (selectedAsset.valor_de_venta || 0)) / (selectedAsset.millas_vida_util || 1)))).toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}
@@ -317,7 +317,7 @@ export const FleetManagement = () => {
               </div>
             </div>
 
-            <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 md:p-8 hover:bg-white/2 transition-colors duration-500 relative overflow-hidden group">
+            <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-[2rem] p-6 md:p-8 hover:bg-white/[0.02] transition-colors duration-500 relative overflow-hidden group">
               {/* Glow sutil en el fondo de esta tarjeta */}
               <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-3xl -mr-10 -mt-10 group-hover:bg-white/10 transition-all duration-700" />
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mb-2">Reserva Mensual (Mtto)</p>
@@ -336,7 +336,7 @@ export const FleetManagement = () => {
 
       {/* MODAL DE EDICIÓN/CREACIÓN */}
       {formMode && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-2xl p-4 overflow-y-auto py-10 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-2xl p-4 overflow-y-auto py-10 animate-in fade-in duration-300">
           <div className="w-full max-w-3xl bg-[#050505] border border-white/10 rounded-[2.5rem] p-6 md:p-10 shadow-2xl relative animate-in zoom-in-95 duration-500 my-auto">
             <button 
               onClick={() => setFormMode(null)} 
@@ -437,7 +437,7 @@ export const FleetManagement = () => {
 
       {/* MODAL DE ELIMINACIÓN */}
       {isDeleting && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4 animate-in fade-in duration-300">
           <div className="p-8 bg-[#050505] border border-red-500/30 rounded-[2.5rem] space-y-6 w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95">
             <div className="flex items-center gap-3 text-red-500">
               <AlertTriangle size={24} />
