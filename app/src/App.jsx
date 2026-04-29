@@ -6,7 +6,7 @@ import { Sidebar } from './components/Sidebar';
 import { SplashScreen } from './components/SplashScreen';
 import { SettingsModule } from './components/settings/SettingsModule';
 import { FleetManagement } from './components/fleet/FleetManagement';
-import { ShiftModule} from './components/shift/ShiftModule';
+import { ShiftModule } from './components/shift/ShiftModule';
 import { LogisticsModule } from './components/logistics/LogisticsModule';
 import { FlowModule } from './components/flow/FlowModule';
 import { PatrimonyModule } from './components/patrimony/PatrimonyModule';
@@ -34,7 +34,7 @@ const MainContent = () => {
         <div key={location.pathname} className="max-w-5xl mx-auto h-full animate-fade-in-up">
           <Routes>
             <Route path="/" element={<DummyModule title="DASHBOARD_ACTIVO" />} />
-            <Route path="/shift" element={<ShiftModule />} />
+            <Route path="/shifts" element={<ShiftModule />} />
             <Route path="/fleet" element={<FleetManagement />} />
             <Route path="/flow" element={<FlowModule />} />
             <Route path="/logistics" element={<LogisticsModule />} />
