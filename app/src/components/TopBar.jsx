@@ -21,7 +21,7 @@ export const TopBar = () => {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
         </span>
-        <span className="text-[9px] text-white/30 font-bold tracking-[0.3em]">SYSTEM_ONLINE</span>
+        <span className="text-[9px] text-white/30 font-bold tracking-[0.3em]">ONLINE</span>
       </div>
 
       <div className="flex items-center gap-4">

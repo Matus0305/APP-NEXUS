@@ -21,7 +21,7 @@ export const Sidebar = () => {
       
       <div className="mb-10 px-4 py-2 mt-4 hover:scale-105 transition-transform duration-500 cursor-default">
         <h2 className="text-xl font-black tracking-[0.3em] text-white italic">NEXUS</h2>
-        <p className="text-[10px] text-white/40 tracking-widest font-mono">CORE SYSTEM</p>
+        <p className="text-[10px] text-white/40 tracking-widest font-mono">Conectando el futuro</p>
       </div>
 
       <nav className="flex-1 space-y-2">
