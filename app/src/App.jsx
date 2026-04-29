@@ -24,6 +24,13 @@ const Placeholder = ({ title }) => (
 );
 
 function App() {
+return (
+  <div className="bg-black min-h-screen text-white pb-24"> {/* pb-24 para que la nav no tape el contenido */}
+    {renderModule()} {/* Aquí renderizas el módulo activo según el estado */}
+    <Navigation currentTab={activeTab} setTab={setActiveTab} />
+  </div>
+);
+
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-black text-white flex flex-col overflow-hidden selection:bg-white/20 selection:text-white">

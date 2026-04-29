@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+@layer base {
+  html, body {
+    /* Evita el scroll "rebotado" y el refresco de Chrome al tirar hacia abajo */
+    overscroll-behavior-y: contain;
+    overflow: hidden;
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    /* Elimina el resaltado azul al tocar botones en Android */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #root {
+    height: 100%;
+    overflow-y: auto;
+    /* Suavizado de scroll tipo nativo */
+    -webkit-overflow-scrolling: touch;
+  }
+}
