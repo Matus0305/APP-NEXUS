@@ -3,104 +3,36 @@
 @theme {
   --font-sans: 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-}
 
-:root {
-  /* Evita que el usuario pueda seleccionar texto accidentalmente al tocar botones o tarjetas */
-  user-select: none;
-  -webkit-user-select: none;
-}
+  /* INTEGRAMOS LAS ANIMACIONES AL NÚCLEO DE TAILWIND */
+  --animate-fade-in-up: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-loading-bar: loading-bar 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  --animate-slide-up-sheet: slideUpSheet 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
 
-/* Fuerza a que todo hijo directo de main no sea más ancho que la pantalla */
-main * {
-  max-width: 100%;
-  box-sizing: border-box;
-}
-
-/* Si tienes tablas en Logística o Flota, esto permite que tengan scroll interno sin romper la app */
-.table-container {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-html, body {
-  /* Fondo Nexus Carbono */
-  background-color: #0A0A0A !important; 
-  margin: 0;
-  padding: 0;
-  
-  /* Evita el efecto rebote y el "deslizar para actualizar" de Chrome en Android */
-  overscroll-behavior-y: none; 
-  
-  /* Bloquea el scroll general de la ventana. 
-     Esto obliga a que el scroll ocurra solo dentro del contenedor de la App, como en Android Nativo */
-  overflow: hidden; 
-  
-  /* Quita el molesto cuadro o destello azul al tocar botones en pantallas táctiles */
-  -webkit-tap-highlight-color: transparent;
-}
-
-/* Ocultar barra de desplazamiento para un look 100% nativo */
-::-webkit-scrollbar {
-  display: none;
-}
-
-/* Ajuste para teléfonos con "Notch" o barras de gestos inferiores */
-.pb-safe {
-  padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* Hacer que los inputs se vean bien en Android y evitar el zoom automático */
-input, select, textarea {
-  font-size: 16px !important; 
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
-  color: white;
-  padding: 0.75rem;
-  
-  /* EXCEPCIÓN IMPORTANTE: Permite interactuar con el texto SOLO dentro de los formularios */
-  user-select: auto;
-  -webkit-user-select: auto;
-
-  /* Añade esto al final de tu index.css */
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(15px);
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  @keyframes loading-bar {
+    0% { width: 0%; }
+    40% { width: 60%; }
+    100% { width: 100%; }
+  }
+
+  @keyframes slideUpSheet {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
   }
 }
 
-.animate-fade-in-up {
-  /* Usamos una curva bezier para que la animación empiece rápido y termine suave (Estilo Apple) */
-  animation: fadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-
-/* Añade esto al final de tu index.css */
-
-@keyframes loading-bar {
-  0% { width: 0%; }
-  40% { width: 60%; }
-  100% { width: 100%; }
-}
-
-.animate-loading-bar {
-  /* Cambiamos 2s por 1s y le damos una curva más agresiva */
-  animation: loading-bar 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-/* 1. ELIMINAR EL REBOTE (Overscroll) DEL NAVEGADOR */
+/* ELIMINAR EL REBOTE (Overscroll) DEL NAVEGADOR */
 html, body {
   overscroll-behavior-y: none;
   -webkit-overflow-scrolling: touch;
 }
 
-/* 2. BARRAS DE SCROLL ESTILO macOS (Invisibles hasta que las usas) */
+/* BARRAS DE SCROLL ESTILO macOS */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
@@ -114,21 +46,4 @@ html, body {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255, 255, 255, 0.3);
-}
-
-@keyframes slideUpSheet {
-  from {
-    transform: translateY(100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateY(0);
-    opacity: 1;
-  }
-}
-
-.animate-slide-up-sheet {
-  animation: slideUpSheet 0.5s cubic-bezier(0.32, 0.72, 0, 1) forwards;
-}
-
 }

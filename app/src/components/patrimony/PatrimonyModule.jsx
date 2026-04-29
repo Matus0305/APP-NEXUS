@@ -9,6 +9,7 @@ import {
   Target,
   Car,
   TrendingDown,
+  TrendingUp, // <--- ¡AQUÍ ESTÁ EL CULPABLE CORREGIDO!
   Percent
 } from 'lucide-react';
 
@@ -63,11 +64,9 @@ export const PatrimonyModule = () => {
       });
 
       // 2. VALOR DE ACTIVOS FIJOS (Vehículos)
-      // *NOTA: En un futuro, restaremos la depreciación acumulada a este valor. Por ahora usamos el precio de compra.
       const { data: vehiculos } = await supabase.from('vehiculos').select('precio_compra, valor_de_venta');
       let valorAutos = 0;
       vehiculos?.forEach(v => {
-         // Usamos un promedio entre precio de compra y valor de reventa para ser conservadores
          const precioC = parseFloat(v.precio_compra) || 0;
          const precioV = parseFloat(v.valor_de_venta) || precioC;
          valorAutos += (precioC + precioV) / 2; 
@@ -86,25 +85,23 @@ export const PatrimonyModule = () => {
 
       // 4. MATEMÁTICAS NEXUS (AUDITADAS Y CORREGIDAS)
       
-      // A. Utilidad Neta: Lo que realmente ha ganado el negocio (Ingresos - Egresos Operativos)
+      // A. Utilidad Neta: Lo que realmente ha ganado el negocio
       const utilidadNetaReal = ingresosTotales - gastosTotales;
 
       // B. Patrimonio Neto (Net Worth): (Dinero en Banco + Valor de Autos) - Deudas de Tarjetas
       const patrimonioTotal = (liquidezDisponible + valorAutos) - deudaAcumulada;
 
-      // C. Ratio de Liquidez (% del patrimonio que es dinero rápido)
-      // Peligro: Si es > 60%, hay dinero estancado. Si es < 10%, riesgo de quiebra técnica.
+      // C. Ratio de Liquidez
       const ratioLiquidez = patrimonioTotal > 0 ? ((liquidezDisponible / (patrimonioTotal + deudaAcumulada)) * 100) : 0;
 
-      // D. Costo de Oportunidad: Dinero inactivo perdiendo contra la inflación/inversión (5% anual / 12 meses)
+      // D. Costo de Oportunidad
       const costoOportunidadMensual = (liquidezDisponible * 0.05) / 12;
 
-      // E. ROI (Retorno sobre Inversión): (Utilidad Neta / Valor de los Activos Comprados) * 100
-      // *CORRECCIÓN: Los gastos operativos no se suman a la inversión, se restan de los ingresos.
+      // E. ROI (Retorno sobre Inversión)
       const roiCalculado = valorAutos > 0 ? ((utilidadNetaReal / valorAutos) * 100) : 0;
 
       setData({
-        netWorth: Math.max(0, patrimonioTotal), // Nunca mostrar un patrimonio negativo sin contexto
+        netWorth: Math.max(0, patrimonioTotal), 
         liquidAssets: liquidezDisponible,
         vehicleAssets: valorAutos,
         totalDebt: deudaAcumulada,
@@ -151,7 +148,7 @@ export const PatrimonyModule = () => {
           </div>
         </header>
 
-        {/* TARJETA PRINCIPAL: CAPITAL NETO GLOBAL (El número que importa) */}
+        {/* TARJETA PRINCIPAL: CAPITAL NETO GLOBAL */}
         <div className="w-full bg-[#0A0A0A]/60 backdrop-blur-3xl rounded-[3rem] p-8 md:p-12 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.6)] relative overflow-hidden flex flex-col group">
           <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 rounded-full blur-[80px] -mr-32 -mt-32 group-hover:bg-indigo-500/20 transition-all duration-700" />
           

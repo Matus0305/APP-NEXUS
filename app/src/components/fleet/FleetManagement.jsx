@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSupabaseQuery } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
+import { triggerHaptic } from '../../utils/haptics';
 import { 
   TrendingDown, Shield, X, Gauge, Plus, Edit2, Trash2, AlertTriangle, Car, Target, ArrowLeft, Wrench, FileText, Settings2, Image as ImageIcon 
 } from 'lucide-react';
@@ -416,7 +417,7 @@ export const FleetManagement = () => {
                   <button 
                     type="button" 
                     onClick={() => {
-                      import('../../utils/haptics').then(m => m.triggerHaptic('heavy'));
+                      triggerHaptic('light');
                       setIsDeleting(true);
                     }} 
                     className="px-6 py-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white font-black uppercase tracking-widest text-[11px] rounded-2xl border border-red-500/20 transition-all active:scale-95"
