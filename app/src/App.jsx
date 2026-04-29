@@ -9,60 +9,37 @@ import { DashboardModule } from './components/Dashboard/DashboardModule';
 import { ShiftModule } from './components/Shift/ShiftModule';
 import { SettingsModule } from './components/settings/SettingsModule';
 import { PatrimonyModule } from './components/patrimony/PatrimonyModule';
-// Asegúrate de que este componente reciba props correctamente
-const Placeholder = ({ title }) => (
-  <div className="h-[70vh] flex items-center justify-center">
-    <div className="text-center space-y-4">
-      <div className="inline-block p-4 bg-neutral-900 rounded-3xl border border-neutral-800 animate-pulse">
-        <p className="text-[10px] font-black tracking-[0.5em] text-neutral-400 uppercase italic">NEXUS_CORE</p>
-      </div>
-      <h2 className="text-neutral-500 font-mono text-xs uppercase tracking-[0.3em]">
-        {title} // MÓDULO_EN_DESARROLLO
-      </h2>
-    </div>
-  </div>
-);
 
 function App() {
-return (
-  <div className="bg-black min-h-screen text-white overflow-x-hidden">
-    {/* Área de contenido con margen inferior para que la nav no tape nada */}
-    <main className="pb-20 pt-4 px-4 max-w-md mx-auto"> 
-      {renderModule()} 
-    </main>
-
-    {/* Barra fija abajo */}
-    <Navigation currentTab={activeTab} setTab={setActiveTab} />
-  </div>
-);
-
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-black text-white flex flex-col overflow-hidden selection:bg-white/20 selection:text-white">
+      {/* CONTENEDOR MAESTRO: Negro puro, ocupa toda la pantalla, evita el scroll horizontal */}
+      <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col overflow-hidden selection:bg-white/20">
         
+        {/* Barra superior fija (TopBar) */}
         <TopBar />
 
-        <main className="flex-1 relative overflow-y-auto bg-linear-to-b from-black via-[#0a0a0a] to-[#111111] p-6 md:p-12 pt-32 pb-32">
-          <div className="max-w-7xl mx-auto h-full">
+        {/* ÁREA DE CONTENIDO: Ajustada para móvil con scroll suave */}
+        <main className="flex-1 relative overflow-y-auto pt-20 pb-32 px-4">
+          <div className="max-w-md mx-auto h-full">
             <Routes>
-              {/* REVISA ESTO: El componente DEBE ir entre < /> en el prop element */}
+              <Route path="/" element={<DashboardModule />} />
               <Route path="/Dashboard" element={<DashboardModule />} />
               <Route path="/fleet" element={<FleetManagement />} />
               <Route path="/flow" element={<FlowModule />} />
               <Route path="/logistics" element={<LogisticsModule />} />
               <Route path="/shift" element={<ShiftModule />} />
               <Route path="/settings" element={<SettingsModule />} />
-              {/* CORRECCIÓN: No pases la función Placeholder, pasa el componente ejecutado */}
               <Route path="/patrimony" element={<PatrimonyModule />} />
-              
-              
-              {/* Ruta por defecto para evitar pantalla blanca si no hay match */}
-              <Route path="/" element={<DashboardModule />} />
             </Routes>
           </div>
         </main>
 
-        <NavigationBar />
+        {/* Navegación inferior fija */}
+        <div className="fixed bottom-0 left-0 right-0 z-50">
+           <NavigationBar />
+        </div>
+
       </div>
     </BrowserRouter>
   );

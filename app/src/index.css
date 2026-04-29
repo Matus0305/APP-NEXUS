@@ -1,19 +1,31 @@
 @import "tailwindcss";
 
 :root {
-  /* Evita que el usuario pueda seleccionar texto accidentalmente al tocar botones */
+  /* Evita que el usuario pueda seleccionar texto accidentalmente al tocar botones o tarjetas */
   user-select: none;
   -webkit-user-select: none;
 }
 
-body {
-  background-color: black;
+html, body {
+  /* Fondo Nexus Carbono */
+  background-color: #0A0A0A !important; 
   margin: 0;
   padding: 0;
-  /* Evita el efecto rebote de Chrome */
-  overscroll-behavior-y: contain; 
-  /* Asegura que no haya scroll horizontal */
-  overflow-x: hidden;
+  
+  /* Evita el efecto rebote y el "deslizar para actualizar" de Chrome en Android */
+  overscroll-behavior-y: none; 
+  
+  /* Bloquea el scroll general de la ventana. 
+     Esto obliga a que el scroll ocurra solo dentro del contenedor de la App, como en Android Nativo */
+  overflow: hidden; 
+  
+  /* Quita el molesto cuadro o destello azul al tocar botones en pantallas táctiles */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Ocultar barra de desplazamiento para un look 100% nativo */
+::-webkit-scrollbar {
+  display: none;
 }
 
 /* Ajuste para teléfonos con "Notch" o barras de gestos inferiores */
@@ -21,12 +33,16 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* Hacer que los inputs se vean bien en Android */
+/* Hacer que los inputs se vean bien en Android y evitar el zoom automático */
 input, select, textarea {
-  font-size: 16px !important; /* Evita que iOS/Android haga zoom al escribir */
+  font-size: 16px !important; 
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 1rem;
   color: white;
   padding: 0.75rem;
+  
+  /* EXCEPCIÓN IMPORTANTE: Permite interactuar con el texto SOLO dentro de los formularios */
+  user-select: auto;
+  -webkit-user-select: auto;
 }
