@@ -346,7 +346,7 @@ export const LogisticsModule = () => {
         <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 pt-20 md:p-4 overflow-hidden">
           <div className="absolute inset-0" onClick={() => { triggerHaptic('light'); setFormMode(null); }}></div>
           
-          <div className="w-full max-w-2xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-slide-up-sheet max-h-[85vh] overflow-y-auto z-10 pb-16 md:pb-10 hide-scrollbar">
+          <div className="w-full max-w-2xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-slide-up-sheet max-h-[75vh] overflow-y-auto z-10 pb-16 md:pb-10 hide-scrollbar">
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
             <button onClick={() => { triggerHaptic('light'); setFormMode(null); }} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block active:scale-90"><X size={20} /></button>
             
