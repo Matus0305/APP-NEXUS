@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { useSupabaseQuery } from '../../hooks/useSupabase';
+import { triggerHaptic } from '../../utils/haptics'; // <-- Importamos nuestro motor de vibración
 import { 
   User, Shield, Camera, Save, CheckCircle2, EyeOff, 
   UserCircle, Calendar, Briefcase, Image as ImageIcon, Lock
@@ -36,74 +37,90 @@ export const SettingsModule = () => {
 
   const handleSave = async (e) => {
     e.preventDefault();
+    triggerHaptic('medium'); // Vibra al intentar guardar
     setIsSubmitting(true);
     
     try {
-      const { error } = await supabase
-        .from('nexus_profile')
-        .update({
-          nombre: formData.nombre,
-          apellido: formData.apellido,
-          profesion: formData.profesion,
-          avatar_url: formData.avatar_url,
-          fecha_nacimiento: formData.fecha_nacimiento,
-          modo_privacidad: formData.modo_privacidad,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profileData[0].id);
-
-      if (error) throw error;
+      // PROTECCIÓN ANTI-CRASH: Si no hay perfil previo, lo creamos. Si hay, lo actualizamos.
+      if (!profileData || profileData.length === 0) {
+        const { error } = await supabase
+          .from('nexus_profile')
+          .insert([{ ...formData, updated_at: new Date().toISOString() }]);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('nexus_profile')
+          .update({ ...formData, updated_at: new Date().toISOString() })
+          .eq('id', profileData[0].id);
+        if (error) throw error;
+      }
 
       setShowSuccess(true);
+      triggerHaptic('light'); // Vibración de éxito
       setTimeout(() => setShowSuccess(false), 3000);
       refetch();
     } catch (err) {
+      triggerHaptic('heavy'); // Vibración de error
       alert("Error al sincronizar con Nexus: " + err.message);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  if (loading) return <div className="p-10 font-mono text-[10px] text-white/40 uppercase tracking-[0.3em]">Accediendo_al_Núcleo...</div>;
+  const togglePrivacy = () => {
+    triggerHaptic('light'); // Vibra al tocar el switch
+    setFormData({...formData, modo_privacidad: !formData.modo_privacidad});
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center h-full">
+      <div className="p-10 font-mono text-[10px] tracking-[0.3em] text-white/40 uppercase animate-pulse">
+        Accediendo_al_Núcleo...
+      </div>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-8 animate-in fade-in slide-in-from-bottom-6 duration-1000 ease-out">
+    <div className="w-full text-white font-sans relative animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out">
       
-      <header className="border-b border-white/5 pb-10">
-        <h1 className="text-5xl font-bold tracking-tighter text-white drop-shadow-[0_0_25px_rgba(255,255,255,0.2)]">Ajustes</h1>
-        <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.4em] mt-3">Configuración Global de Identidad</p>
+      <header className="flex justify-between items-end border-b border-white/5 pb-6 mb-8">
+        <div>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">AJUSTES</h1>
+            <p className="text-white/40 text-[10px] font-bold uppercase tracking-[0.3em] mt-2">Configuración Global de Identidad</p>
+        </div>
       </header>
 
       <form onSubmit={handleSave} className="space-y-6">
         
         {/* SECCIÓN: PERFIL DEL OPERADOR */}
-        <div className="bg-[#0A0A0A]/80 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 space-y-10 shadow-2xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-[100px] -mr-32 -mt-32" />
+        <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-[2.5rem] p-6 md:p-10 hover:bg-white/2 transition-colors duration-500 relative overflow-hidden group">
+          {/* Luz de fondo sutil que reacciona al pasar el ratón/dedo */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -mr-32 -mt-32 transition-all duration-700 group-hover:bg-white/10" />
           
-          <div className="flex items-center gap-4 border-b border-white/5 pb-6 relative z-10">
-            <div className="p-3 bg-white/5 rounded-2xl text-white/40">
-              <UserCircle size={20} />
+          <div className="flex items-center gap-3 mb-8 border-b border-white/5 pb-4 relative z-10">
+            <div className="p-2 bg-white/5 rounded-xl text-white">
+              <UserCircle size={18} />
             </div>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/60">Identidad del Propietario</h2>
+            <h2 className="text-[11px] font-black uppercase tracking-widest text-white/60">Identidad del Propietario</h2>
           </div>
 
-          <div className="flex flex-col md:flex-row gap-12 items-start relative z-10">
+          <div className="flex flex-col md:flex-row gap-8 lg:gap-12 items-start relative z-10">
             {/* AVATAR DINÁMICO */}
-            <div className="relative group mx-auto md:mx-0">
-              <div className="w-44 h-44 rounded-[3.5rem] overflow-hidden border-2 border-white/10 group-hover:border-white/40 transition-all duration-700 shadow-2xl bg-[#111]">
+            <div className="relative group/avatar mx-auto md:mx-0 shrink-0">
+              <div className="w-40 h-40 rounded-[2.5rem] overflow-hidden border border-white/10 group-hover/avatar:border-white/30 transition-all duration-500 shadow-2xl bg-black/50">
                 <img 
                   src={formData.avatar_url || 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?w=400'} 
-                  className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" 
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover/avatar:scale-110 opacity-80 group-hover/avatar:opacity-100" 
                   alt="Perfil"
                 />
               </div>
-              <div className="absolute -bottom-2 -right-2 p-4 bg-white text-black rounded-3xl shadow-2xl">
-                <ImageIcon size={20} strokeWidth={3} />
+              <div className="absolute -bottom-3 -right-3 p-3 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl shadow-xl transition-transform group-hover/avatar:scale-110">
+                <ImageIcon size={18} />
               </div>
             </div>
 
             {/* INPUTS DE IDENTIDAD */}
-            <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="flex-1 w-full grid grid-cols-1 md:grid-cols-2 gap-4">
               <Input 
                 label="Nombre" 
                 placeholder="Tu nombre"
@@ -142,49 +159,53 @@ export const SettingsModule = () => {
         </div>
 
         {/* SECCIÓN: PRIVACIDAD */}
-        <div className="bg-[#0A0A0A]/80 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 shadow-2xl">
-          <div className="flex items-center gap-4 border-b border-white/5 pb-6 mb-8">
-            <div className="p-3 bg-cyan-500/10 rounded-2xl text-cyan-400">
-              <Lock size={20} />
+        <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-[2.5rem] p-6 md:p-10 hover:bg-white/2 transition-colors duration-500">
+          <div className="flex items-center gap-3 border-b border-white/5 pb-4 mb-6">
+            <div className="p-2 bg-cyan-500/10 rounded-xl text-cyan-400">
+              <Lock size={18} />
             </div>
-            <h2 className="text-xs font-black uppercase tracking-[0.3em] text-white/60">Seguridad Visual</h2>
+            <h2 className="text-[11px] font-black uppercase tracking-widest text-white/60">Seguridad Visual</h2>
           </div>
 
-          <div className="flex items-center justify-between p-6 bg-white/5 rounded-4xl border border-white/5 group hover:bg-white/8 transition-all">
-            <div className="flex items-center gap-6">
-              <div className={`p-4 rounded-2xl transition-all duration-500 ${formData.modo_privacidad ? 'bg-cyan-500 text-black' : 'bg-white/5 text-white/20'}`}>
-                <EyeOff size={24} />
+          {/* TOGGLE APPLE STYLE (Toda la fila es clickeable) */}
+          <div 
+            onClick={togglePrivacy}
+            className="flex items-center justify-between p-5 md:p-6 bg-black/40 rounded-3xl border border-white/5 cursor-pointer active:scale-[0.98] transition-all duration-300 group"
+          >
+            <div className="flex items-center gap-5">
+              <div className={`p-3 md:p-4 rounded-2xl transition-all duration-500 ${formData.modo_privacidad ? 'bg-cyan-500 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)]' : 'bg-white/5 text-white/40'}`}>
+                <EyeOff size={22} />
               </div>
               <div>
                 <h3 className="text-sm font-bold text-white tracking-tight">Modo Privacidad Global</h3>
-                <p className="text-[10px] text-white/30 uppercase font-bold tracking-tighter mt-1">Afecta Dashboard, Billetera y Reportes</p>
+                <p className="text-[10px] text-white/40 uppercase font-bold tracking-widest mt-1">Oculta cifras en toda la app</p>
               </div>
             </div>
-            <button 
-              type="button"
-              onClick={() => setFormData({...formData, modo_privacidad: !formData.modo_privacidad})}
-              className={`w-16 h-9 rounded-full transition-all duration-700 relative border border-white/10 ${formData.modo_privacidad ? 'bg-white' : 'bg-white/5'}`}
-            >
-              <div className={`absolute top-1.5 w-6 h-6 rounded-full transition-all duration-500 shadow-xl ${formData.modo_privacidad ? 'left-8.5 bg-black' : 'left-1.5 bg-white/20'}`} />
-            </button>
+            
+            {/* Switch visual */}
+            <div className={`w-14 h-8 rounded-full transition-colors duration-500 relative border border-white/10 ${formData.modo_privacidad ? 'bg-cyan-500 border-cyan-400' : 'bg-white/10'}`}>
+              <div className={`absolute top-1 w-6 h-6 rounded-full bg-white transition-all duration-500 shadow-md ${formData.modo_privacidad ? 'left-7' : 'left-1'}`} />
+            </div>
           </div>
         </div>
 
-        <div className="flex justify-end pt-8">
+        {/* BOTÓN DE GUARDAR */}
+        <div className="flex justify-end pt-4 pb-10">
           <button 
             type="submit" 
             disabled={isSubmitting}
-            className="group flex items-center gap-4 bg-white text-black px-12 py-6 rounded-4xl font-black uppercase tracking-[0.2em] text-[12px] hover:scale-105 transition-all shadow-[0_20px_50px_rgba(255,255,255,0.2)] disabled:opacity-50"
+            className="group flex items-center justify-center gap-3 bg-white text-black px-10 py-5 md:py-4 rounded-2xl font-black uppercase tracking-widest text-[11px] w-full md:w-auto hover:bg-neutral-200 active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.15)] disabled:opacity-50"
           >
-            {isSubmitting ? 'Sincronizando...' : <><Save size={20} strokeWidth={3} /> Guardar Perfil</>}
+            {isSubmitting ? 'Sincronizando...' : <><Save size={18} /> Guardar Perfil</>}
           </button>
         </div>
       </form>
 
+      {/* NOTIFICACIÓN DE ÉXITO */}
       {showSuccess && (
-        <div className="fixed bottom-32 left-1/2 -translate-x-1/2 bg-white text-black px-10 py-5 rounded-full flex items-center gap-4 animate-in slide-in-from-bottom-20 shadow-[0_20px_80px_rgba(255,255,255,0.4)] z-200">
-          <CheckCircle2 size={24} strokeWidth={3} className="text-green-600" />
-          <span className="text-[11px] font-black uppercase tracking-widest">Cambios Aplicados en Nexus</span>
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-3xl text-black px-6 py-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-bottom-10 fade-in zoom-in-95 duration-300 shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-200">
+          <CheckCircle2 size={20} className="text-emerald-500" />
+          <span className="text-[10px] font-black uppercase tracking-widest">Identidad Actualizada</span>
         </div>
       )}
 
@@ -192,13 +213,19 @@ export const SettingsModule = () => {
   );
 };
 
-const Input = ({ label, type = "text", ...props }) => (
-  <div className="space-y-2 w-full">
-    <label className="text-[9px] text-white/30 font-bold uppercase tracking-[0.2em] ml-2">{label}</label>
-    <input 
-      type={type} 
-      className="w-full bg-[#111] border border-white/5 text-white text-sm p-5 rounded-3xl focus:border-white/40 focus:bg-[#151515] outline-none transition-all shadow-inner placeholder:text-white/10" 
-      {...props} 
-    />
-  </div>
-);
+// Subcomponente de Input perfeccionado
+const Input = ({ label, type = "text", value, ...props }) => {
+  const isDate = type === 'date';
+  
+  return (
+    <div className="space-y-2 w-full">
+      <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">{label}</label>
+      <input 
+        type={type} 
+        value={value ?? ''} 
+        className={`w-full bg-white/5 border border-white/5 text-white text-sm p-4 rounded-2xl focus:border-white/30 focus:bg-white/10 outline-none transition-all duration-300 shadow-inner placeholder:text-white/20 ${isDate ? 'font-mono' : 'font-sans'}`} 
+        {...props} 
+      />
+    </div>
+  );
+};

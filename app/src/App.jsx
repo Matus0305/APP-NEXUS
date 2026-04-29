@@ -3,9 +3,8 @@ import { HashRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { TopBar } from './components/TopBar';
 import { BottomNav } from './components/BottomNav';
 import { Sidebar } from './components/Sidebar';
-import { SplashScreen } from './components/SplashScreen'; // <-- Importamos la pantalla de carga
-
-// Aquí importamos el garaje real que acabamos de hacer
+import { SplashScreen } from './components/SplashScreen';
+import { SettingsModule } from './components/settings/SettingsModule';
 import { FleetManagement } from './components/fleet/FleetManagement';
 
 // Componente temporal para los demás
@@ -32,11 +31,11 @@ const MainContent = () => {
           <Routes>
             <Route path="/" element={<DummyModule title="DASHBOARD_ACTIVO" />} />
             <Route path="/shift" element={<DummyModule title="MÓDULO_JORNADA" />} />
-            <Route path="/fleet" element={<FleetManagement />} /> {/* <-- Ya conectamos el Garaje Real */}
+            <Route path="/fleet" element={<FleetManagement />} />
             <Route path="/flow" element={<DummyModule title="MÓDULO_FLUJO_CAJA" />} />
             <Route path="/logistics" element={<DummyModule title="MÓDULO_LOGÍSTICA" />} />
             <Route path="/patrimony" element={<DummyModule title="MÓDULO_PATRIMONIO" />} />
-            <Route path="/settings" element={<DummyModule title="MÓDULO_AJUSTES" />} />
+            <Route path="/settings" element={<SettingsModule />} />
           </Routes>
         </div>
       </main>
