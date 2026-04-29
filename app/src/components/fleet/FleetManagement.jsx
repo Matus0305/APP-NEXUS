@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useSupabaseQuery } from '../../hooks/useSupabase';
 import { supabase } from '../../lib/supabase';
-import { triggerHaptic } from '../../utils/haptics';
+import { triggerHaptic } from '../../utils/haptics'; // <-- IMPORTACIÓN ESTÁTICA CORRECTA
 import { 
   TrendingDown, Shield, X, Gauge, Plus, Edit2, Trash2, AlertTriangle, Car, Target, ArrowLeft, Wrench, FileText, Settings2, Image as ImageIcon 
 } from 'lucide-react';
@@ -121,7 +121,6 @@ export const FleetManagement = () => {
   return (
     <div className="w-full text-white font-sans relative">
       
-      {/* VISTA PRINCIPAL: LISTA DE VEHÍCULOS */}
       {!selectedAsset && (
         <div className="space-y-8 animate-in fade-in zoom-in-[0.98] duration-500 ease-out">
           <header className="flex justify-between items-end border-b border-white/5 pb-6">
@@ -181,7 +180,6 @@ export const FleetManagement = () => {
         </div>
       )}
 
-      {/* VISTA DE DETALLE: ACTIVO SELECCIONADO */}
       {selectedAsset && (
         <div className="animate-in slide-in-from-right-8 fade-in duration-500 w-full space-y-6">
           
@@ -226,7 +224,6 @@ export const FleetManagement = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
             
-            {/* MANTENIMIENTO PREVENTIVO */}
             <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 md:p-8 hover:bg-white/2 transition-colors duration-500">
               <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
                 <div className="p-2 bg-white/5 rounded-xl"><Wrench size={16} className="text-white"/></div>
@@ -266,7 +263,6 @@ export const FleetManagement = () => {
               </div>
             </div>
 
-            {/* DOCUMENTACIÓN */}
             <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 md:p-8 hover:bg-white/2 transition-colors duration-500">
               <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
                 <div className="p-2 bg-white/5 rounded-xl"><FileText size={16} className="text-white"/></div>
@@ -302,7 +298,6 @@ export const FleetManagement = () => {
               </div>
             </div>
 
-            {/* FINANZAS Y PATRIMONIO */}
             <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 md:p-8 hover:bg-white/2 transition-colors duration-500">
               <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mb-2">Patrimonio del Activo</p>
               <p className="text-4xl md:text-5xl font-mono font-medium text-white tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
@@ -332,19 +327,19 @@ export const FleetManagement = () => {
 
       {/* MODAL DE EDICIÓN/CREACIÓN (ESTILO BOTTOM SHEET) */}
       {formMode && (
-        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-md p-0 md:p-4 overflow-hidden">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/40 backdrop-blur-md p-0 md:p-4 overflow-hidden animate-in fade-in duration-300">
           
-          {/* Fondo interactivo para cerrar */}
           <div className="absolute inset-0" onClick={() => setFormMode(null)}></div>
 
-          {/* AQUÍ ESTÁ LA MAGIA: animate-slide-up-sheet */}
-          <div className="w-full max-w-3xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-slide-up-sheet max-h-[90dvh] overflow-y-auto z-10 pb-32 md:pb-10">
+          <div className="w-full max-w-3xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-in slide-in-from-bottom-full md:zoom-in-95 duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] max-h-[90dvh] overflow-y-auto z-10 pb-32 md:pb-10">
             
-            {/* Barra indicadora de arrastre (Móvil) */}
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8 md:hidden"></div>
 
             <button 
-              onClick={() => setFormMode(null)} 
+              onClick={() => {
+                triggerHaptic('light'); // USAMOS LA FUNCIÓN ESTÁTICA
+                setFormMode(null);
+              }} 
               className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 p-2 rounded-full transition-all active:scale-90 hidden md:block"
             >
               <X size={20} />
@@ -417,7 +412,7 @@ export const FleetManagement = () => {
                   <button 
                     type="button" 
                     onClick={() => {
-                      triggerHaptic('light');
+                      triggerHaptic('heavy'); // USAMOS LA FUNCIÓN ESTÁTICA
                       setIsDeleting(true);
                     }} 
                     className="px-6 py-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white font-black uppercase tracking-widest text-[11px] rounded-2xl border border-red-500/20 transition-all active:scale-95"
@@ -428,7 +423,7 @@ export const FleetManagement = () => {
                 <button 
                   type="submit" 
                   disabled={isSubmitting} 
-                  onClick={() => import('../../utils/haptics').then(m => m.triggerHaptic('medium'))}
+                  onClick={() => triggerHaptic('medium')} // USAMOS LA FUNCIÓN ESTÁTICA
                   className="flex-1 py-4 bg-white text-black hover:bg-neutral-200 font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-xl transition-all active:scale-95 disabled:opacity-50"
                 >
                   {isSubmitting ? 'Procesando...' : 'Guardar y Sincronizar'}
@@ -439,7 +434,6 @@ export const FleetManagement = () => {
         </div>
       )}
 
-      {/* MODAL DE ELIMINACIÓN */}
       {isDeleting && (
         <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4 animate-in fade-in duration-300">
           <div className="p-8 bg-[#050505] border border-red-500/30 rounded-[2.5rem] space-y-6 w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95">
@@ -470,7 +464,6 @@ export const FleetManagement = () => {
   );
 };
 
-// Subcomponente de Input perfeccionado
 const Input = ({ label, type = "text", value, ...props }) => {
   const isNumber = type === 'number' || label.includes('($)') || label.includes('(Millas)');
   
