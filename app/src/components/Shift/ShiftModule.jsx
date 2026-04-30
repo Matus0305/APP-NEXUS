@@ -63,6 +63,7 @@ export const ShiftModule = () => {
   const isChecklistComplete = checklistDB?.length > 0 && checklistDB.every(item => checkedItems[item.id]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Helper Privacidad
   const renderMoney = (val) => isPrivacyActive ? '••••' : `$${Number(val || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
