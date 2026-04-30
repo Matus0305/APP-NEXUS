@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 const StatsCard = ({ title, amount, icon, color }) => (
-  <div className="bg-black/40 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 shadow-inner hover:bg-white/5 transition-all">
+  <div className="bg-black/40 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 shadow-inner hover:bg-white/5 transition-all duration-300 hover:-translate-y-1">
     <div className="flex items-center gap-3 mb-4">
       <div className="p-2 bg-white/5 rounded-xl text-white/60 flex items-center justify-center">
         {icon}
@@ -34,18 +34,15 @@ const Input = ({ label, ...props }) => (
 );
 
 export const FlowModule = () => {
-  // 1. DATA FETCHING
-  const { isPrivacyActive } = usePrivacy(); // Estandarizado
+  const { isPrivacyActive } = usePrivacy(); 
   const { data: cuentas, loading: loadingCuentas, refetch: refetchCuentas } = useSupabaseQuery('nexus_cuentas');
   const { data: categoriasAll } = useSupabaseQuery('nexus_categories');
 
-  // 2. NAVEGACIÓN Y ESTADOS
   const [activeTab, setActiveTab] = useState('Efectivo');
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [movimientos, setMovimientos] = useState([]);
   const [loadingMovs, setLoadingMovs] = useState(false);
 
-  // 3. ESTADOS DE MODALES Y FORMULARIOS
   const [showAccountForm, setShowAccountForm] = useState(false);
   const [showMovForm, setShowMovForm] = useState(false);
   const [showTransferForm, setShowTransferForm] = useState(false);
@@ -54,9 +51,8 @@ export const FlowModule = () => {
 
   const initialAccountState = {
     id: null, nombre_cuenta: '', tipo: 'Efectivo', banco: 'Efectivo', ultimos_digitos: '',
-    color_tarjeta: '#10b981',
-    saldo_actual: '', limite_credito: '', tasa_rendimiento: '', reglas_cashback: '', fecha_corte: '',
-    fecha_pago: '', cashback_acumulado: ''
+    color_tarjeta: '#10b981', saldo_actual: '', limite_credito: '', tasa_rendimiento: '', 
+    reglas_cashback: '', fecha_corte: '', fecha_pago: '', cashback_acumulado: ''
   };
   const [accountForm, setAccountForm] = useState(initialAccountState);
 
@@ -67,10 +63,8 @@ export const FlowModule = () => {
     origen_id: '', destino_id: '', monto: '', descripcion: 'Transferencia interna' 
   });
 
-  // HELPER PRIVACIDAD (Unificado para Nexus)
   const renderMoney = (val) => isPrivacyActive ? '••••' : `$${Number(val || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
 
-  // 4. EFECTOS
   useEffect(() => {
     if (selectedAccount) fetchMovimientos(selectedAccount.id);
   }, [selectedAccount]);
@@ -91,13 +85,11 @@ export const FlowModule = () => {
   const filtradas = cuentas?.filter(c => c.tipo === activeTab) || [];
   const categoriasFiltradas = categoriasAll?.filter(c => c.tipo === movForm.tipo && c.modulo === 'General') || [];
 
-  // 6. HANDLERS
   const handleEditClick = () => {
     triggerHaptic('light');
     setAccountForm({
       id: selectedAccount.id, nombre_cuenta: selectedAccount.nombre_cuenta || '', tipo: selectedAccount.tipo || 'Efectivo',
-      banco: selectedAccount.banco || '', ultimos_digitos: selectedAccount.ultimos_digitos || '',
-      color_tarjeta: selectedAccount.color_tarjeta || '#10b981',
+      banco: selectedAccount.banco || '', ultimos_digitos: selectedAccount.ultimos_digitos || '', color_tarjeta: selectedAccount.color_tarjeta || '#10b981',
       saldo_actual: selectedAccount.saldo_actual || '', limite_credito: selectedAccount.limite_credito || '',
       tasa_rendimiento: selectedAccount.tasa_rendimiento || '', cashback_acumulado: selectedAccount.cashback_acumulado || '',
       fecha_corte: selectedAccount.fecha_corte || '', fecha_pago: selectedAccount.fecha_pago || ''
@@ -112,73 +104,56 @@ export const FlowModule = () => {
   };
 
   const handleSaveAccount = async (e) => {
-    e.preventDefault();
-    triggerHaptic('medium');
-    setIsSubmitting(true);
+    e.preventDefault(); triggerHaptic('medium'); setIsSubmitting(true);
     try {
       const payload = {
         nombre_cuenta: accountForm.nombre_cuenta, tipo: accountForm.tipo, banco: accountForm.banco,
         ultimos_digitos: accountForm.ultimos_digitos, color_tarjeta: accountForm.color_tarjeta,
         saldo_actual: parseFloat(accountForm.saldo_actual) || 0, limite_credito: parseFloat(accountForm.limite_credito) || 0,
         tasa_rendimiento: parseFloat(accountForm.tasa_rendimiento) || 0, cashback_acumulado: parseFloat(accountForm.cashback_acumulado) || 0,
-        fecha_corte: accountForm.fecha_corte ? parseInt(accountForm.fecha_corte) : null,
-        fecha_pago: accountForm.fecha_pago ? parseInt(accountForm.fecha_pago) : null,
+        fecha_corte: accountForm.fecha_corte ? parseInt(accountForm.fecha_corte) : null, fecha_pago: accountForm.fecha_pago ? parseInt(accountForm.fecha_pago) : null,
       };
       if (accountForm.id) {
-        const { error } = await supabase.from('nexus_cuentas').update(payload).eq('id', accountForm.id);
-        if (error) throw error;
+        await supabase.from('nexus_cuentas').update(payload).eq('id', accountForm.id);
         setSelectedAccount({ ...selectedAccount, ...payload });
       } else {
-        const { error } = await supabase.from('nexus_cuentas').insert([payload]);
-        if (error) throw error;
+        await supabase.from('nexus_cuentas').insert([payload]);
       }
-      triggerHaptic('heavy'); setShowAccountForm(false);
-      setAccountForm(initialAccountState); refetchCuentas();
-    } catch (err) { triggerHaptic('heavy'); alert(`Error: ${err.message}`); }
-    finally { setIsSubmitting(false); }
+      triggerHaptic('heavy'); setShowAccountForm(false); setAccountForm(initialAccountState); refetchCuentas();
+    } catch (err) { alert(`Error: ${err.message}`); } finally { setIsSubmitting(false); }
   };
 
   const handleSaveMovement = async (e) => {
-    e.preventDefault();
-    triggerHaptic('medium');
-    setIsSubmitting(true);
+    e.preventDefault(); triggerHaptic('medium'); setIsSubmitting(true);
     try {
       const monto = parseFloat(movForm.monto);
       let cbGenerado = 0;
       if ((selectedAccount.tipo === 'Crédito' || selectedAccount.tipo === 'Débito') && movForm.tipo === 'Egreso' && parseFloat(movForm.porcentaje_cashback) > 0) {
         cbGenerado = monto * (parseFloat(movForm.porcentaje_cashback) / 100);
       }
-      const { error } = await supabase.from('nexus_movimientos').insert([{
+      await supabase.from('nexus_movimientos').insert([{
         tipo: movForm.tipo, monto: monto, descripcion: movForm.descripcion,
         categoria_id: movForm.categoria_id || null, cashback_generado: cbGenerado, cuenta_id: selectedAccount.id
       }]);
-      if (error) throw error;
       
       let nuevoSaldo = Number(selectedAccount.saldo_actual);
-      if (selectedAccount.tipo === 'Crédito') {
-        nuevoSaldo = movForm.tipo === 'Egreso' ? nuevoSaldo + monto : nuevoSaldo - monto;
-      } else {
-        nuevoSaldo = movForm.tipo === 'Ingreso' ? nuevoSaldo + monto : nuevoSaldo - monto;
-      }
-      const nuevoCashbackAcumulado = Number(selectedAccount.cashback_acumulado || 0) + cbGenerado;
+      if (selectedAccount.tipo === 'Crédito') nuevoSaldo = movForm.tipo === 'Egreso' ? nuevoSaldo + monto : nuevoSaldo - monto;
+      else nuevoSaldo = movForm.tipo === 'Ingreso' ? nuevoSaldo + monto : nuevoSaldo - monto;
       
+      const nuevoCashbackAcumulado = Number(selectedAccount.cashback_acumulado || 0) + cbGenerado;
       await supabase.from('nexus_cuentas').update({ saldo_actual: nuevoSaldo, cashback_acumulado: nuevoCashbackAcumulado }).eq('id', selectedAccount.id);
       
-      triggerHaptic('heavy');
-      setShowMovForm(false);
+      triggerHaptic('heavy'); setShowMovForm(false);
       setMovForm({ tipo: 'Egreso', monto: '', descripcion: '', porcentaje_cashback: '', categoria_id: '' });
-      fetchMovimientos(selectedAccount.id);
-      refetchCuentas();
+      fetchMovimientos(selectedAccount.id); refetchCuentas();
       setSelectedAccount({ ...selectedAccount, saldo_actual: nuevoSaldo, cashback_acumulado: nuevoCashbackAcumulado });
-    } catch (err) { triggerHaptic('heavy'); alert(`Error: ${err.message}`); }
-    finally { setIsSubmitting(false); }
+    } catch (err) { alert(`Error: ${err.message}`); } finally { setIsSubmitting(false); }
   };
 
   const handleTransfer = async (e) => {
     e.preventDefault();
     if (transferForm.origen_id === transferForm.destino_id) return alert("Las cuentas deben ser diferentes");
-    triggerHaptic('medium');
-    setIsSubmitting(true);
+    triggerHaptic('medium'); setIsSubmitting(true);
     try {
       const monto = parseFloat(transferForm.monto);
       const origen = cuentas.find(c => c.id === transferForm.origen_id);
@@ -193,12 +168,9 @@ export const FlowModule = () => {
       await supabase.from('nexus_cuentas').update({ saldo_actual: nuevoSaldoOrigen }).eq('id', origen.id);
       await supabase.from('nexus_cuentas').update({ saldo_actual: nuevoSaldoDestino }).eq('id', destino.id);
       
-      triggerHaptic('heavy');
-      setShowTransferForm(false);
-      setTransferForm({ origen_id: '', destino_id: '', monto: '', descripcion: '' });
-      refetchCuentas();
-    } catch (err) { alert(err.message); }
-    finally { setIsSubmitting(false); }
+      triggerHaptic('heavy'); setShowTransferForm(false);
+      setTransferForm({ origen_id: '', destino_id: '', monto: '', descripcion: '' }); refetchCuentas();
+    } catch (err) { alert(err.message); } finally { setIsSubmitting(false); }
   };
 
   const handleDeleteMovement = async (mov) => {
@@ -207,16 +179,11 @@ export const FlowModule = () => {
     try {
       const monto = Number(mov.monto);
       let nuevoSaldo = Number(selectedAccount.saldo_actual);
-      if (selectedAccount.tipo === 'Crédito') {
-        nuevoSaldo = mov.tipo === 'Egreso' ? nuevoSaldo - monto : nuevoSaldo + monto;
-      } else {
-        nuevoSaldo = mov.tipo === 'Ingreso' ? nuevoSaldo - monto : nuevoSaldo + monto;
-      }
+      if (selectedAccount.tipo === 'Crédito') nuevoSaldo = mov.tipo === 'Egreso' ? nuevoSaldo - monto : nuevoSaldo + monto;
+      else nuevoSaldo = mov.tipo === 'Ingreso' ? nuevoSaldo - monto : nuevoSaldo + monto;
+      
       let nuevoCashback = Number(selectedAccount.cashback_acumulado || 0) - Number(mov.cashback_generado || 0);
-      
-      const { error } = await supabase.from('nexus_movimientos').delete().eq('id', mov.id);
-      if (error) throw error;
-      
+      await supabase.from('nexus_movimientos').delete().eq('id', mov.id);
       await supabase.from('nexus_cuentas').update({ saldo_actual: nuevoSaldo, cashback_acumulado: nuevoCashback }).eq('id', selectedAccount.id);
       
       triggerHaptic('light'); fetchMovimientos(selectedAccount.id); refetchCuentas();
@@ -225,30 +192,27 @@ export const FlowModule = () => {
   };
 
   const handleDeleteAccount = async () => {
-    triggerHaptic('heavy');
-    setIsSubmitting(true);
+    triggerHaptic('heavy'); setIsSubmitting(true);
     try {
-      const { error } = await supabase.from('nexus_cuentas').delete().eq('id', selectedAccount.id);
-      if (error) throw error;
+      await supabase.from('nexus_cuentas').delete().eq('id', selectedAccount.id);
       triggerHaptic('heavy'); setIsDeleting(false); setSelectedAccount(null); refetchCuentas();
-    } catch (err) { alert(`Error: ${err.message}`); }
-    finally { setIsSubmitting(false); }
+    } catch (err) { alert(`Error: ${err.message}`); } finally { setIsSubmitting(false); }
   };
 
   if (loadingCuentas) return <div className="flex items-center justify-center h-full p-10 font-mono text-[10px] tracking-[0.3em] text-white/40 uppercase animate-pulse">Sincronizando_Bóveda...</div>;
 
   return (
-    <div className="w-full text-white font-sans relative pb-32 animate-in fade-in duration-700">
-      {/* VISTA 1: LISTADO DE CUENTAS */}
-      {!selectedAccount && (
-        <div className="max-w-6xl mx-auto space-y-8 animate-in slide-in-from-bottom-8 duration-500">
+    <div className="w-full text-white font-sans relative pb-32">
+      {/* VISTA 1: LISTADO DE CUENTAS (Animación Fade & Slide up) */}
+      {!selectedAccount && !showAccountForm && !showTransferForm && !showMovForm && (
+        <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-500 ease-out">
           <header className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-white/5 pb-8 gap-6">
             <div>
               <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">BILLETERA</h1>
               <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Gestor de Activos</p>
             </div>
             <div className="flex gap-3 w-full md:w-auto">
-              <button onClick={() => { triggerHaptic('light'); setShowTransferForm(true); }} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white/5 text-white px-6 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 active:scale-95 transition-all">
+              <button onClick={() => { triggerHaptic('light'); setShowTransferForm(true); }} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white/5 text-white px-6 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] border border-white/10 hover:bg-white/10 active:scale-95 transition-all">
                 <ArrowRightLeft size={16} strokeWidth={3} /> Transferir
               </button>
               <button onClick={() => { triggerHaptic('light'); setAccountForm(initialAccountState); setShowAccountForm(true); }} className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white text-black px-6 py-3.5 rounded-2xl font-black uppercase tracking-widest text-[10px] active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.2)]">
@@ -258,14 +222,14 @@ export const FlowModule = () => {
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group hover:bg-white/5 transition-all cursor-pointer">
+            <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group hover:bg-white/5 transition-all cursor-pointer hover:-translate-y-1">
               <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-[50px] -mr-10 -mt-10 group-hover:bg-emerald-500/20 transition-all" />
               <p className="text-[10px] text-emerald-400 font-black uppercase tracking-widest mb-2 relative z-10">Liquidez</p>
               <p className="text-4xl font-mono font-bold tracking-tighter text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)] relative z-10">
                 {renderMoney(liquidezTotal)}
               </p>
             </div>
-            <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group hover:bg-white/5 transition-all cursor-pointer">
+            <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl border border-white/5 p-8 rounded-[2.5rem] shadow-2xl relative overflow-hidden group hover:bg-white/5 transition-all cursor-pointer hover:-translate-y-1">
               <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-[50px] -mr-10 -mt-10 group-hover:bg-red-500/20 transition-all" />
               <p className="text-[10px] text-red-400 font-black uppercase tracking-widest mb-2 relative z-10">Deuda Actual</p>
               <p className="text-4xl font-mono font-bold text-white tracking-tighter relative z-10">
@@ -279,7 +243,7 @@ export const FlowModule = () => {
               <button
                 key={tab}
                 onClick={() => { triggerHaptic('light'); setActiveTab(tab); }}
-                className={`flex-1 min-w-24 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
+                className={`flex-1 min-w-24 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black shadow-md scale-105' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
               >
                 {tab}
               </button>
@@ -288,23 +252,23 @@ export const FlowModule = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filtradas.length === 0 ? (
-              <div className="col-span-full py-20 text-center text-white/20 text-[10px] font-mono uppercase tracking-widest border border-dashed border-white/5 rounded-[3rem]">No hay activos en esta categoría</div>
+              <div className="col-span-full py-20 text-center text-white/20 text-[10px] font-mono uppercase tracking-widest border border-dashed border-white/5 rounded-[3rem] animate-pulse">No hay activos en esta categoría</div>
             ) : (
-              filtradas.map(c => (
+              filtradas.map((c, index) => (
                 <div
                   key={c.id}
                   onClick={() => { triggerHaptic('light'); setSelectedAccount(c); }}
-                  style={{ background: `linear-gradient(135deg, ${c.color_tarjeta}cc, #000000)` }}
-                  className="group relative h-56 rounded-[2.5rem] p-8 cursor-pointer hover:-translate-y-2 active:scale-[0.98] transition-all duration-500 border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between"
+                  style={{ background: `linear-gradient(135deg, ${c.color_tarjeta}cc, #000000)`, animationDelay: `${index * 50}ms` }}
+                  className="group relative h-56 rounded-[2.5rem] p-8 cursor-pointer hover:-translate-y-2 active:scale-[0.98] transition-all duration-500 border border-white/10 shadow-[0_20px_40px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col justify-between animate-in fade-in zoom-in-[0.95]"
                 >
                   <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-all duration-500" />
-                  <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-[60px] -mr-10 -mt-10 group-hover:bg-white/20 transition-all duration-700" />
+                  <div className="absolute top-0 right-0 w-48 h-48 bg-white/10 rounded-full blur-[60px] -mr-10 -mt-10 group-hover:bg-white/20 transition-all duration-700 group-hover:scale-110" />
                   <div className="flex justify-between items-start z-10">
                     <div>
                       <h3 className="text-2xl font-bold text-white tracking-tight drop-shadow-md">{c.nombre_cuenta}</h3>
                       <p className="text-[10px] font-mono text-white/60 tracking-[0.2em] uppercase mt-1">{c.banco}</p>
                     </div>
-                    <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl">
+                    <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl group-hover:scale-110 transition-transform">
                       {c.tipo === 'Efectivo' ? <Banknote size={20} className="text-white" /> : c.tipo === 'Cuentas' ? <PiggyBank size={20} className="text-white" /> : <CreditCard size={20} className="text-white" />}
                     </div>
                   </div>
@@ -326,11 +290,11 @@ export const FlowModule = () => {
         </div>
       )}
 
-      {/* VISTA 2: DETALLE DE CUENTA */}
-      {selectedAccount && (
-        <div className="animate-in slide-in-from-right-8 duration-500 max-w-4xl mx-auto space-y-6">
+      {/* VISTA 2: DETALLE DE CUENTA (Animación Slide from right & Zoom) */}
+      {selectedAccount && !showAccountForm && !showTransferForm && !showMovForm && (
+        <div className="animate-in slide-in-from-right-8 fade-in zoom-in-[0.98] duration-500 ease-out max-w-4xl mx-auto space-y-6">
           <div className="flex justify-between items-center mb-4">
-            <button onClick={() => { triggerHaptic('light'); setSelectedAccount(null); }} className="flex items-center text-[10px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-5 py-3 rounded-2xl border border-white/5 active:scale-95">
+            <button onClick={() => { triggerHaptic('light'); setSelectedAccount(null); }} className="flex items-center text-[10px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-all bg-white/5 hover:bg-white/10 px-5 py-3 rounded-2xl border border-white/5 active:scale-95 hover:-translate-x-1">
               <ArrowLeft size={14} className="mr-2"/> Billetera
             </button>
             <div className="flex gap-2">
@@ -344,14 +308,14 @@ export const FlowModule = () => {
           </div>
           
           <div style={{ background: `linear-gradient(135deg, ${selectedAccount.color_tarjeta}dd, #000000)` }} className="w-full h-72 rounded-[3rem] p-10 border border-white/10 shadow-[0_30px_60px_rgba(0,0,0,0.6)] relative overflow-hidden flex flex-col justify-between group">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-20 -mt-20 group-hover:bg-white/20 transition-all duration-700" />
-            <div className="z-10">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[80px] -mr-20 -mt-20 group-hover:bg-white/20 transition-all duration-1000 group-hover:scale-110" />
+            <div className="z-10 animate-in fade-in slide-in-from-left-4 duration-700 delay-100">
               <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-xl">{selectedAccount.nombre_cuenta}</h2>
               <p className="text-[10px] font-mono text-white/60 tracking-[0.3em] uppercase mt-2">
                 {selectedAccount.banco} {selectedAccount.tipo === 'Efectivo' ? '' : (selectedAccount.tipo === 'Cuentas' ? selectedAccount.ultimos_digitos : (selectedAccount.ultimos_digitos ? `• •••• ${selectedAccount.ultimos_digitos}` : ''))}
               </p>
             </div>
-            <div className="z-10">
+            <div className="z-10 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
               <p className="text-[10px] text-white/60 uppercase font-black tracking-widest mb-1">{selectedAccount.tipo === 'Crédito' ? 'Deuda al día' : 'Liquidez disponible'}</p>
               <p className="text-5xl md:text-6xl font-mono font-bold text-white tracking-tighter drop-shadow-2xl">
                 {renderMoney(selectedAccount.saldo_actual)}
@@ -359,25 +323,19 @@ export const FlowModule = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {selectedAccount.tipo === 'Cuentas' && (
-              <StatsCard title="Rendimiento Anual" amount={selectedAccount.tasa_rendimiento ? `${selectedAccount.tasa_rendimiento}%` : '--'} icon={<TrendingUp size={16}/>} color="text-emerald-400" />
-            )}
-            {(selectedAccount.tipo === 'Crédito' || selectedAccount.tipo === 'Débito') && (
-              <StatsCard title="Alcancía Cashback" amount={renderMoney(selectedAccount.cashback_acumulado)} icon={<Sparkles size={16}/>} color="text-purple-400" />
-            )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+            {selectedAccount.tipo === 'Cuentas' && <StatsCard title="Rendimiento Anual" amount={selectedAccount.tasa_rendimiento ? `${selectedAccount.tasa_rendimiento}%` : '--'} icon={<TrendingUp size={16}/>} color="text-emerald-400" />}
+            {(selectedAccount.tipo === 'Crédito' || selectedAccount.tipo === 'Débito') && <StatsCard title="Alcancía Cashback" amount={renderMoney(selectedAccount.cashback_acumulado)} icon={<Sparkles size={16}/>} color="text-purple-400" />}
             {selectedAccount.tipo === 'Crédito' && (
               <>
                 <StatsCard title="Límite Restante" amount={renderMoney(selectedAccount.limite_credito - selectedAccount.saldo_actual)} icon={<Wallet size={16}/>} color="text-cyan-400" />
                 <StatsCard title="Corte / Pago" amount={selectedAccount.fecha_corte ? `${selectedAccount.fecha_corte} / ${selectedAccount.fecha_pago}` : '--'} icon={<Calendar size={16}/>} color="text-red-400" />
               </>
             )}
-            {selectedAccount.tipo === 'Efectivo' && (
-              <StatsCard title="Estado Físico" amount="Caja" icon={<Banknote size={16}/>} color="text-emerald-400" />
-            )}
+            {selectedAccount.tipo === 'Efectivo' && <StatsCard title="Estado Físico" amount="Caja" icon={<Banknote size={16}/>} color="text-emerald-400" />}
           </div>
 
-          <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl border border-white/5 rounded-[3rem] p-6 md:p-10 flex flex-col min-h-100">
+          <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl border border-white/5 rounded-[3rem] p-6 md:p-10 flex flex-col min-h-100 animate-in fade-in slide-in-from-bottom-10 duration-700 delay-500">
             <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-6">
               <div className="flex items-center gap-3">
                 <History size={18} className="text-white/30" />
@@ -392,16 +350,16 @@ export const FlowModule = () => {
               {loadingMovs ? <p className="text-[10px] font-mono text-white/20 text-center py-20 uppercase tracking-widest animate-pulse">Analizando_Registros...</p> :
               movimientos.length === 0 ? <p className="text-[10px] font-mono text-white/20 text-center py-20 border border-dashed border-white/5 rounded-4xl uppercase tracking-widest">Sin movimientos registrados</p> : (
                 <div className="space-y-2">
-                  {movimientos.map(m => {
+                  {movimientos.map((m, idx) => {
                     const isPos = selectedAccount.tipo === 'Crédito' ? m.tipo === 'Ingreso' : m.tipo === 'Ingreso';
                     return (
-                      <div key={m.id} className="flex justify-between items-center py-4 px-5 bg-white/5 border border-white/5 rounded-2xl group hover:bg-white/10 transition-all">
+                      <div key={m.id} style={{animationDelay: `${idx * 50}ms`}} className="flex justify-between items-center py-4 px-5 bg-white/5 border border-white/5 rounded-2xl group hover:bg-white/10 transition-all animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center gap-4">
                           <div className={`p-3 rounded-xl bg-black/50 border border-white/5 ${isPos ? 'text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'text-white/30'}`}>
                             {isPos ? <ArrowDownRight size={18}/> : <ArrowUpRight size={18}/>}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-white/90 tracking-tight flex items-center gap-2">
+                            <p className="text-sm font-bold text-white/90 tracking-tight flex items-center gap-2 group-hover:translate-x-1 transition-transform">
                               {m.descripcion}
                             </p>
                             <div className="flex gap-3 mt-1 items-center">
@@ -428,16 +386,14 @@ export const FlowModule = () => {
       )}
 
       {/* ======================================================== */}
-      {/* MODALES CON SCROLL INDEPENDIENTE (NUEVO ESTÁNDAR NEXUS)  */}
+      {/* FORMULARIOS FULL-SCREEN NEXUS (ANIMADOS)                 */}
       {/* ======================================================== */}
 
       {/* MODAL: TRANSFERENCIA */}
       {showTransferForm && (
-        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-6 overflow-hidden">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-6 animate-in fade-in duration-300 ease-out">
           <div className="absolute inset-0 hidden md:block" onClick={() => { triggerHaptic('light'); setShowTransferForm(false); }}></div>
-          <div className="w-full max-w-md bg-[#0A0A0A] md:bg-[#0A0A0A]/95 md:backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative flex flex-col h-full md:h-auto md:max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom duration-500">
-            
-            {/* Cabecera Fija */}
+          <div className="w-full max-w-md bg-[#0A0A0A] md:bg-[#0A0A0A]/95 md:backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative flex flex-col h-full md:h-auto md:max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom-12 md:zoom-in-[0.98] duration-500 ease-out">
             <div className="shrink-0 p-6 md:p-10 pb-4 border-b border-white/5 bg-[#0A0A0A] z-20">
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
               <div className="flex justify-between items-start md:items-center">
@@ -450,8 +406,6 @@ export const FlowModule = () => {
                 </button>
               </div>
             </div>
-
-            {/* Contenido con Scroll Real */}
             <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-6 hide-scrollbar relative z-10 pb-10">
               <form id="transfer-form" onSubmit={handleTransfer} className="space-y-6">
                 <div className="space-y-4">
@@ -476,8 +430,6 @@ export const FlowModule = () => {
                 </div>
               </form>
             </div>
-
-            {/* Acciones Fijas (Sticky Bottom) */}
             <div className="shrink-0 p-6 md:p-10 border-t border-white/5 bg-[#0A0A0A] z-20">
               <button form="transfer-form" type="submit" disabled={isSubmitting} className="w-full py-5 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-[0_10px_30px_rgba(255,255,255,0.2)] active:scale-95 transition-all disabled:opacity-50">
                 {isSubmitting ? 'Procesando...' : 'Confirmar Transferencia'}
@@ -489,11 +441,9 @@ export const FlowModule = () => {
 
       {/* MODAL: NUEVO / EDITAR ACTIVO FINANCIERO */}
       {showAccountForm && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-6 overflow-hidden">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-6 animate-in fade-in duration-300 ease-out">
           <div className="absolute inset-0 hidden md:block" onClick={closeAccountForm}></div>
-          <div className="w-full max-w-2xl bg-[#0A0A0A] md:bg-[#0A0A0A]/95 md:backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative flex flex-col h-full md:h-auto md:max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom duration-500">
-            
-            {/* Cabecera Fija */}
+          <div className="w-full max-w-2xl bg-[#0A0A0A] md:bg-[#0A0A0A]/95 md:backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative flex flex-col h-full md:h-auto md:max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom-12 md:zoom-in-[0.98] duration-500 ease-out">
             <div className="shrink-0 p-6 md:p-10 pb-4 border-b border-white/5 bg-[#0A0A0A] z-20">
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
               <div className="flex justify-between items-start md:items-center">
@@ -508,8 +458,6 @@ export const FlowModule = () => {
                 </button>
               </div>
             </div>
-
-            {/* Contenido con Scroll Real */}
             <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-6 hide-scrollbar relative z-10 pb-10">
               <form id="account-form" onSubmit={handleSaveAccount} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -531,28 +479,18 @@ export const FlowModule = () => {
                     <input type="color" value={accountForm.color_tarjeta} onChange={e => setAccountForm({...accountForm, color_tarjeta: e.target.value})} className="w-full h-14 bg-white/5 border border-white/5 rounded-2xl p-1 cursor-pointer transition-all" />
                   </div>
                 </div>
-
                 {accountForm.tipo !== 'Efectivo' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
                     <Input label="Institución Bancaria" placeholder="Ej. Bank of America" value={accountForm.banco} onChange={e => setAccountForm({...accountForm, banco: e.target.value})} required />
                     <Input label={accountForm.tipo === 'Cuentas' ? 'Nº Completo / CLABE' : 'Últimos 4 Dígitos'} type="number" placeholder={accountForm.tipo === 'Cuentas' ? 'Ej. 0000012345678' : 'Ej. 1234'} maxLength={accountForm.tipo === 'Cuentas' ? 30 : 4} value={accountForm.ultimos_digitos} onChange={e => setAccountForm({...accountForm, ultimos_digitos: e.target.value})} />
                   </div>
                 )}
-
                 <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
                   <Input label={accountForm.tipo === 'Crédito' ? 'Deuda Inicial ($)' : 'Saldo de Apertura ($)'} type="number" step="0.01" value={accountForm.saldo_actual} onChange={e => setAccountForm({...accountForm, saldo_actual: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all" placeholder="0.00" required/>
-                  
-                  {accountForm.tipo === 'Crédito' && (
-                    <Input label="Límite Autorizado ($)" type="number" step="0.01" value={accountForm.limite_credito} onChange={e => setAccountForm({...accountForm, limite_credito: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-cyan-400/50 outline-none transition-all" placeholder="0.00" required/>
-                  )}
-                  {accountForm.tipo === 'Cuentas' && (
-                    <Input label="Rendimiento Anual (TEA %)" type="number" step="0.01" value={accountForm.tasa_rendimiento} onChange={e => setAccountForm({...accountForm, tasa_rendimiento: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all" placeholder="3.5"/>
-                  )}
-                  {(accountForm.tipo === 'Crédito' || accountForm.tipo === 'Débito') && (
-                    <Input label="Cashback Inicial ($)" type="number" step="0.01" value={accountForm.cashback_acumulado} onChange={e => setAccountForm({...accountForm, cashback_acumulado: e.target.value})} className="w-full bg-black/40 border border-purple-500/20 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-purple-400/50 outline-none transition-all placeholder:text-purple-400/30" placeholder="0.00"/>
-                  )}
+                  {accountForm.tipo === 'Crédito' && <Input label="Límite Autorizado ($)" type="number" step="0.01" value={accountForm.limite_credito} onChange={e => setAccountForm({...accountForm, limite_credito: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-cyan-400/50 outline-none transition-all" placeholder="0.00" required/>}
+                  {accountForm.tipo === 'Cuentas' && <Input label="Rendimiento Anual (TEA %)" type="number" step="0.01" value={accountForm.tasa_rendimiento} onChange={e => setAccountForm({...accountForm, tasa_rendimiento: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all" placeholder="3.5"/>}
+                  {(accountForm.tipo === 'Crédito' || accountForm.tipo === 'Débito') && <Input label="Cashback Inicial ($)" type="number" step="0.01" value={accountForm.cashback_acumulado} onChange={e => setAccountForm({...accountForm, cashback_acumulado: e.target.value})} className="w-full bg-black/40 border border-purple-500/20 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-purple-400/50 outline-none transition-all placeholder:text-purple-400/30" placeholder="0.00"/>}
                 </div>
-
                 {accountForm.tipo === 'Crédito' && (
                   <div className="grid grid-cols-2 gap-4">
                     <Input label="Día de Corte" type="number" min="1" max="31" value={accountForm.fecha_corte} onChange={e => setAccountForm({...accountForm, fecha_corte: e.target.value})} placeholder="15" />
@@ -561,8 +499,6 @@ export const FlowModule = () => {
                 )}
               </form>
             </div>
-
-            {/* Acciones Fijas (Sticky Bottom) */}
             <div className="shrink-0 p-6 md:p-10 border-t border-white/5 bg-[#0A0A0A] z-20">
               <button form="account-form" type="submit" disabled={isSubmitting} className="w-full py-5 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.2)] disabled:opacity-50">
                 {isSubmitting ? 'Procesando...' : (accountForm.id ? 'Guardar Cambios' : 'Crear Activo Financiero')}
@@ -574,11 +510,9 @@ export const FlowModule = () => {
 
       {/* MODAL: REGISTRO DE FLUJO */}
       {showMovForm && (
-        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-6 overflow-hidden">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-6 animate-in fade-in duration-300 ease-out">
           <div className="absolute inset-0 hidden md:block" onClick={() => { triggerHaptic('light'); setShowMovForm(false); }}></div>
-          <div className="w-full max-w-md bg-[#0A0A0A] md:bg-[#0A0A0A]/95 md:backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative flex flex-col h-full md:h-auto md:max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom duration-500">
-            
-            {/* Cabecera Fija */}
+          <div className="w-full max-w-md bg-[#0A0A0A] md:bg-[#0A0A0A]/95 md:backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative flex flex-col h-full md:h-auto md:max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom-12 md:zoom-in-[0.98] duration-500 ease-out">
             <div className="shrink-0 p-6 md:p-10 pb-4 border-b border-white/5 bg-[#0A0A0A] z-20">
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
               <div className="flex justify-between items-start md:items-center">
@@ -591,8 +525,6 @@ export const FlowModule = () => {
                 </button>
               </div>
             </div>
-
-            {/* Contenido con Scroll Real */}
             <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-6 hide-scrollbar relative z-10 pb-10">
               <form id="mov-form" onSubmit={handleSaveMovement} className="space-y-6">
                 <div className="flex bg-white/5 p-1 rounded-2xl mb-6">
@@ -603,41 +535,36 @@ export const FlowModule = () => {
                     Ingreso / Entrada
                   </button>
                 </div>
-
                 <div className="flex flex-col items-center justify-center py-8 bg-black/40 rounded-3xl border border-white/5">
                   <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 mb-2">Monto de Operación ($)</label>
-                  <div className="flex items-center">
-                    <span className="text-4xl text-white/40 font-mono mr-2">$</span>
-                    <input type="number" step="0.01" required value={movForm.monto} onChange={e => setMovForm({...movForm, monto: e.target.value})} className="w-40 bg-transparent text-white text-5xl font-black outline-none font-mono text-left placeholder:text-white/10" placeholder="0.00" autoFocus />
+                  <div className="flex items-center justify-center gap-2">
+                    <span className={`text-3xl font-black ${movForm.tipo === 'Ingreso' ? 'text-emerald-400' : 'text-red-400'}`}>$</span>
+                    <input type="number" step="0.01" autoFocus required value={movForm.monto} onChange={e => setMovForm({...movForm, monto: e.target.value})} className="w-32 bg-transparent text-white text-5xl font-black outline-none font-mono text-center placeholder:text-white/10" placeholder="0.00" />
                   </div>
                 </div>
-
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 pt-2">
                   <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1 flex items-center gap-2"><Tags size={12}/> Categoría</label>
                   <select required value={movForm.categoria_id} onChange={e => setMovForm({...movForm, categoria_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white font-bold p-4 rounded-2xl outline-none appearance-none focus:border-white/30 transition-all font-sans">
                     <option value="" disabled className="bg-[#0A0A0A]">Selecciona el rubro...</option>
-                    {categoriasFiltradas?.map(cat => <option key={cat.id} value={cat.id} className="bg-[#0A0A0A]">{cat.nombre}</option>)}
+                    {categoriasFiltradas?.map(cat => <option className="bg-[#0A0A0A]" key={cat.id} value={cat.id}>{cat.nombre}</option>)}
                   </select>
                 </div>
-
-                <Input label="Descripción (Opcional)" value={movForm.descripcion} onChange={e => setMovForm({...movForm, descripcion: e.target.value})} placeholder="Detalles de la transacción..." />
-
+                <Input label="Nota Opcional" placeholder="Detalles de la compra..." value={movForm.descripcion} onChange={e => setMovForm({...movForm, descripcion: e.target.value})} />
                 {(selectedAccount.tipo === 'Crédito' || selectedAccount.tipo === 'Débito') && movForm.tipo === 'Egreso' && (
-                  <div className="p-5 bg-purple-500/10 rounded-2xl border border-purple-500/20">
-                    <Input label="% Cashback Aplicado (Opcional)" type="number" step="0.01" value={movForm.porcentaje_cashback} onChange={e => setMovForm({...movForm, porcentaje_cashback: e.target.value})} className="w-full bg-black/40 border border-purple-500/20 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-purple-400 outline-none transition-all placeholder:text-purple-400/30" placeholder="Ej. 1.5"/>
+                  <div className="p-5 border border-purple-500/30 bg-purple-500/10 rounded-4xl animate-in fade-in slide-in-from-top-4 duration-300">
+                    <label className="text-[9px] text-purple-400 font-black uppercase tracking-widest ml-1">% Cashback Aplicado (Opcional)</label>
+                    <input type="number" step="0.1" value={movForm.porcentaje_cashback} onChange={e => setMovForm({...movForm, porcentaje_cashback: e.target.value})} className="w-full mt-2 bg-black/40 border border-purple-500/20 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-purple-400 outline-none transition-all placeholder:text-purple-400/30" placeholder="Ej. 1.5"/>
                     {movForm.monto > 0 && movForm.porcentaje_cashback > 0 && (
-                      <p className="text-[10px] text-purple-400 font-black tracking-widest uppercase mt-3 flex items-center gap-2">
-                        <Sparkles size={12}/> Generando +${(parseFloat(movForm.monto) * (parseFloat(movForm.porcentaje_cashback)/100)).toFixed(2)} USD
+                      <p className="text-[10px] text-purple-400 font-mono mt-3 text-right uppercase font-bold tracking-widest">
+                        Generando +${(parseFloat(movForm.monto) * (parseFloat(movForm.porcentaje_cashback)/100)).toFixed(2)} USD
                       </p>
                     )}
                   </div>
                 )}
               </form>
             </div>
-
-            {/* Acciones Fijas (Sticky Bottom) */}
             <div className="shrink-0 p-6 md:p-10 border-t border-white/5 bg-[#0A0A0A] z-20">
-              <button form="mov-form" type="submit" disabled={isSubmitting} className={`w-full py-5 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-95 transition-all disabled:opacity-50 ${movForm.tipo === 'Ingreso' ? 'bg-emerald-500 text-black hover:bg-emerald-600' : 'bg-red-500 text-white hover:bg-red-600'}`}>
+              <button form="mov-form" type="submit" disabled={isSubmitting} className={`w-full py-5 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-95 transition-all shadow-lg disabled:opacity-50 ${movForm.tipo === 'Ingreso' ? 'bg-emerald-500 hover:bg-emerald-600 text-black shadow-[0_10px_30px_rgba(16,185,129,0.3)]' : 'bg-red-500 hover:bg-red-600 shadow-[0_10px_30px_rgba(239,68,68,0.3)]'}`}>
                 {isSubmitting ? 'Procesando...' : 'Confirmar Transacción'}
               </button>
             </div>
@@ -647,8 +574,8 @@ export const FlowModule = () => {
 
       {/* MODAL DE ELIMINACIÓN */}
       {isDeleting && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4 animate-in fade-in duration-300">
-          <div className="p-8 bg-[#050505] border border-red-500/30 rounded-[2.5rem] space-y-6 w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95 text-center">
+        <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4 animate-in fade-in duration-300 ease-out">
+          <div className="p-8 bg-[#050505] border border-red-500/30 rounded-[2.5rem] space-y-6 w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-90 fade-in duration-300 text-center">
             <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-2 border border-red-500/20">
               <AlertCircle size={40}/>
             </div>
@@ -665,7 +592,6 @@ export const FlowModule = () => {
           </div>
         </div>
       )}
-
     </div>
   );
 };
