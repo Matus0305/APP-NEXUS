@@ -12,7 +12,7 @@ export const FleetManagement = () => {
   const { data: vehiculos, loading, refetch } = useSupabaseQuery('vehiculos');
   const { isPrivacyActive } = usePrivacy();
   const [selectedAsset, setSelectedAsset] = useState(null);
-  const [formMode, setFormMode] = useState(null);
+  const [formMode, setFormMode] = useState(null); // 'add' o 'edit'
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -92,7 +92,7 @@ export const FleetManagement = () => {
     setIsSubmitting(false);
     if (!error) {
       setIsDeleting(false);
-      setFormMode(null); // Aseguramos salir del formMode si estábamos ahí
+      setFormMode(null);
       setSelectedAsset(null);
       refetch();
     }
@@ -137,13 +137,16 @@ export const FleetManagement = () => {
   return (
     <div className="w-full text-white font-sans relative pb-32">
       
-      {/* VISTA 1: LISTADO PRINCIPAL */}
+      {/* VISTA 1: LISTADO PRINCIPAL (Animada) */}
       {!formMode && !selectedAsset && (
-        <div className="space-y-8 animate-in fade-in zoom-in-[0.98] duration-500 ease-out">
+        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700 ease-out max-w-6xl mx-auto">
           <header className="flex justify-between items-end border-b border-white/5 pb-6">
-            <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-              MI GARAJE
-            </h1>
+            <div>
+              <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                MI GARAJE
+              </h1>
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em] mt-3">Gestor de Flota</p>
+            </div>
             <button
               onClick={() => { setFormData(initialFormState); setFormMode('add'); triggerHaptic('light'); }}
               className="flex items-center gap-2 bg-white text-black px-5 py-3 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:scale-105 active:scale-95 hover:shadow-[0_0_20px_rgba(255,255,255,0.4)] transition-all duration-300"
@@ -153,14 +156,15 @@ export const FleetManagement = () => {
           </header>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {vehiculos?.map((v) => {
+            {vehiculos?.map((v, index) => {
               const healthRaw = Math.round(((v.millas_vida_util - v.millaje_actual) / (v.millas_vida_util || 1)) * 100);
               const health = healthRaw > 0 ? healthRaw : 0;
               return (
                 <div
                   key={v.id}
                   onClick={() => { setSelectedAsset(v); triggerHaptic('light'); }}
-                  className="group bg-[#0A0A0A]/40 backdrop-blur-2xl border border-white/5 rounded-4xl hover:bg-white/5 transition-all duration-500 cursor-pointer hover:border-white/20 active:scale-[0.98] shadow-2xl flex flex-col min-h-64 overflow-hidden relative"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  className="group bg-[#0A0A0A]/40 backdrop-blur-2xl border border-white/5 rounded-4xl hover:bg-white/5 transition-all duration-500 cursor-pointer hover:-translate-y-1 active:scale-[0.98] shadow-2xl flex flex-col min-h-64 overflow-hidden relative animate-in fade-in zoom-in-[0.95] ease-out"
                 >
                   <div className="w-full h-40 relative overflow-hidden">
                     <img src={v.imagen_url || DEFAULT_CAR_IMAGE} alt={v.modelo} className="w-full h-full object-cover opacity-50 group-hover:opacity-80 group-hover:scale-110 transition-all duration-700 ease-out" />
@@ -188,10 +192,10 @@ export const FleetManagement = () => {
         </div>
       )}
 
-      {/* VISTA 2: DETALLE DEL VEHÍCULO */}
+      {/* VISTA 2: DETALLE DEL VEHÍCULO (Animada y Pantalla Completa) */}
       {!formMode && selectedAsset && (
-        <div className="animate-in slide-in-from-right-8 fade-in duration-500 w-full space-y-6">
-          <div className="relative w-full h-64 md:h-80 rounded-4xl overflow-hidden border border-white/10 shadow-2xl shrink-0">
+        <div className="animate-in slide-in-from-right-8 fade-in duration-500 ease-out w-full max-w-5xl mx-auto space-y-6">
+          <div className="relative w-full h-64 md:h-80 rounded-[3rem] overflow-hidden border border-white/10 shadow-2xl shrink-0 group">
             <div className="absolute top-4 left-4 right-4 z-20 flex justify-between">
               <button onClick={() => setSelectedAsset(null)} className="flex items-center text-[10px] font-bold uppercase tracking-widest bg-black/40 backdrop-blur-md px-5 py-3 rounded-full border border-white/10 hover:bg-white hover:text-black active:scale-90 transition-all duration-300">
                 <ArrowLeft size={14} className="mr-2"/> Regresar
@@ -200,13 +204,13 @@ export const FleetManagement = () => {
                 <Edit2 size={16} />
               </button>
             </div>
-            <img src={selectedAsset.imagen_url || DEFAULT_CAR_IMAGE} alt={selectedAsset.modelo} className="w-full h-full object-cover" />
+            <img src={selectedAsset.imagen_url || DEFAULT_CAR_IMAGE} alt={selectedAsset.modelo} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-1000 ease-out" />
             <div className="absolute inset-0 bg-linear-to-t from-[#0A0A0A] via-[#0A0A0A]/40 to-transparent"></div>
-            <div className="absolute bottom-6 left-6 md:left-10 z-20">
-              <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]">
+            <div className="absolute bottom-6 left-6 md:left-10 z-20 animate-in slide-in-from-bottom-4 fade-in duration-700 delay-100">
+              <h1 className="text-4xl md:text-6xl font-black tracking-tighter text-white drop-shadow-[0_0_20px_rgba(0,0,0,0.8)]">
                 {selectedAsset.marca} <span className="text-white/60">{selectedAsset.modelo}</span>
               </h1>
-              <div className="flex items-center gap-3 mt-2">
+              <div className="flex items-center gap-3 mt-3">
                 <p className="text-xs text-white/60 font-bold uppercase tracking-widest font-mono">Año {selectedAsset.año}</p>
                 <span className="w-1.5 h-1.5 rounded-full bg-white/40"></span>
                 <div className="flex items-center gap-1.5">
@@ -217,7 +221,7 @@ export const FleetManagement = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 animate-in slide-in-from-bottom-8 fade-in duration-700 delay-200">
             {/* Mantenimiento */}
             <div className="bg-black/20 backdrop-blur-2xl border border-white/5 rounded-4xl p-6 md:p-8 hover:bg-white/2 transition-colors duration-500">
               <div className="flex items-center gap-3 mb-6 border-b border-white/5 pb-4">
@@ -323,9 +327,11 @@ export const FleetManagement = () => {
         </div>
       )}
 
-      {/* VISTA 3: FORMULARIO PANTALLA COMPLETA (NUEVO ESTÁNDAR) */}
+      {/* VISTA 3: FORMULARIO PANTALLA COMPLETA (NUEVO ESTÁNDAR NEXUS) */}
       {formMode && (
-        <div className="animate-in slide-in-from-right-8 fade-in duration-500 w-full space-y-6">
+        <div className="animate-in slide-in-from-right-8 fade-in duration-500 ease-out w-full max-w-5xl mx-auto space-y-8">
+          
+          {/* Cabecera del Formulario */}
           <header className="flex items-center gap-4 border-b border-white/5 pb-6">
             <button 
               onClick={() => setFormMode(null)} 
@@ -341,25 +347,27 @@ export const FleetManagement = () => {
             </div>
           </header>
 
-          <form onSubmit={handleSaveVehicle} className="space-y-8 max-w-4xl pb-10">
+          {/* Cuerpo del Formulario que permite Scroll Natural de la página */}
+          <form onSubmit={handleSaveVehicle} className="space-y-6 pb-20">
             
-            <div className="bg-[#0A0A0A]/40 backdrop-blur-2xl p-6 md:p-8 rounded-4xl border border-white/5 space-y-6">
+            <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl p-6 md:p-10 rounded-[3rem] border border-white/5 shadow-2xl space-y-8">
+              
               {/* Estética */}
-              <div className="space-y-4">
+              <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
                 <div className="flex items-center gap-2 text-white/60">
-                  <ImageIcon size={14} />
+                  <ImageIcon size={16} />
                   <h4 className="text-[10px] font-black uppercase tracking-widest">Identidad Visual</h4>
                 </div>
                 <Input label="URL de Imagen del Vehículo" placeholder="https://..." value={formData.imagen_url} onChange={e => setFormData({...formData, imagen_url: e.target.value})} />
               </div>
 
               {/* Datos Base */}
-              <div className="space-y-4 pt-4 border-t border-white/5">
+              <div className="space-y-4 pt-6 border-t border-white/5 animate-in slide-in-from-bottom-6 duration-500 delay-75">
                 <div className="flex items-center gap-2 text-white/60">
-                  <Car size={14} />
+                  <Car size={16} />
                   <h4 className="text-[10px] font-black uppercase tracking-widest">Especificaciones</h4>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Input label="Marca" placeholder="Ej. Nissan" value={formData.marca} onChange={e => setFormData({...formData, marca: e.target.value})} required />
                   <Input label="Modelo" placeholder="Ej. Sentra" value={formData.modelo} onChange={e => setFormData({...formData, modelo: e.target.value})} required />
                   <Input label="Año" type="number" value={formData.año} onChange={e => setFormData({...formData, año: e.target.value})} required />
@@ -367,9 +375,9 @@ export const FleetManagement = () => {
               </div>
 
               {/* Finanzas */}
-              <div className="space-y-4 pt-4 border-t border-white/5">
+              <div className="space-y-4 pt-6 border-t border-white/5 animate-in slide-in-from-bottom-8 duration-500 delay-100">
                 <div className="flex items-center gap-2 text-white/60">
-                  <TrendingDown size={14} />
+                  <TrendingDown size={16} />
                   <h4 className="text-[10px] font-black uppercase tracking-widest">Valuación Financiera</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -379,18 +387,18 @@ export const FleetManagement = () => {
               </div>
 
               {/* Operativa y Mtto */}
-              <div className="space-y-4 pt-4 border-t border-white/5">
+              <div className="space-y-4 pt-6 border-t border-white/5 animate-in slide-in-from-bottom-10 duration-500 delay-150">
                 <div className="flex items-center gap-2 text-white/60">
-                  <Settings2 size={14} />
+                  <Settings2 size={16} />
                   <h4 className="text-[10px] font-black uppercase tracking-widest">Estado y Mantenimiento</h4>
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Input label="Odómetro (Millas)" type="number" value={formData.millaje_actual} onChange={e => setFormData({...formData, millaje_actual: e.target.value})} required />
                   <Input label="Vida Útil (Millas)" type="number" value={formData.millas_vida_util} onChange={e => setFormData({...formData, millas_vida_util: e.target.value})} required />
                   <Input label="Reserva Mensual ($)" type="number" value={formData.meta_mantenimiento} onChange={e => setFormData({...formData, meta_mantenimiento: e.target.value})} required />
                 </div>
                 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-black/40 p-5 rounded-3xl mt-4 border border-white/5">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white/5 p-6 rounded-3xl mt-4 border border-white/5">
                   <Input label="Últ. Aceite Motor" type="number" value={formData.ultimo_cambio_aceite_motor} onChange={e => setFormData({...formData, ultimo_cambio_aceite_motor: e.target.value})} />
                   <Input label="Int. Motor" type="number" value={formData.intervalo_aceite_motor} onChange={e => setFormData({...formData, intervalo_aceite_motor: e.target.value})} />
                   <Input label="Últ. Aceite Caja" type="number" value={formData.ultimo_cambio_aceite_caja} onChange={e => setFormData({...formData, ultimo_cambio_aceite_caja: e.target.value})} />
@@ -399,9 +407,9 @@ export const FleetManagement = () => {
               </div>
 
               {/* Legal */}
-              <div className="space-y-4 pt-4 border-t border-white/5">
+              <div className="space-y-4 pt-6 border-t border-white/5 animate-in slide-in-from-bottom-12 duration-500 delay-200">
                 <div className="flex items-center gap-2 text-white/60">
-                  <Shield size={14} />
+                  <Shield size={16} />
                   <h4 className="text-[10px] font-black uppercase tracking-widest">Documentación</h4>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -411,15 +419,15 @@ export const FleetManagement = () => {
               </div>
             </div>
 
-            {/* Acciones */}
-            <div className="flex flex-row gap-4 pt-6">
+            {/* Acciones del Formulario */}
+            <div className="flex flex-col md:flex-row gap-4 pt-4 animate-in fade-in duration-700 delay-300">
               {formMode === 'edit' && (
                 <button 
                   type="button" 
                   onClick={() => { triggerHaptic('heavy'); setIsDeleting(true); }}
-                  className="px-6 py-5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl font-black uppercase tracking-widest text-[11px] border border-red-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
+                  className="w-full md:w-auto px-8 py-5 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white rounded-2xl font-black uppercase tracking-widest text-[11px] border border-red-500/20 transition-all active:scale-95 flex items-center justify-center gap-2"
                 >
-                  <Trash2 size={18} /> <span className="hidden md:inline">Eliminar</span>
+                  <Trash2 size={18} /> <span>Eliminar</span>
                 </button>
               )}
               <button 
@@ -461,12 +469,12 @@ export const FleetManagement = () => {
 const Input = ({ label, type = "text", value, ...props }) => {
   const isNumber = type === 'number' || label?.includes('($)') || label?.includes('(Millas)');
   return (
-    <div className="space-y-2">
+    <div className="space-y-2 w-full">
       <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">{label}</label>
       <input
         type={type}
         value={value ?? ""}
-        className={`w-full bg-white/5 border border-white/5 text-white text-sm p-4 rounded-2xl focus:border-white/30 focus:bg-white/10 outline-none transition-all duration-300 shadow-inner ${isNumber ? 'font-mono' : 'font-sans'}`}
+        className={`w-full bg-white/5 border border-white/5 text-white text-sm p-5 rounded-2xl focus:border-white/30 focus:bg-white/10 outline-none transition-all duration-300 shadow-inner ${isNumber ? 'font-mono' : 'font-sans'}`}
         {...props}
       />
     </div>
