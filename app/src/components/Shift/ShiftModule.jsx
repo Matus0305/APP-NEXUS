@@ -6,23 +6,14 @@ import {
   Play, Square, Plus, Minus, Clock, MapPin, Car, DollarSign, Wallet, TrendingDown, Wrench, CheckCircle2, X, Calendar, History, Trash2, ShieldCheck, AlertTriangle, Pause, Navigation
 } from 'lucide-react';
 
-// ==========================================
-// COMPONENTE: RELOJ INDEPENDIENTE (A PRUEBA DE PAUSAS)
-// ==========================================
 const LiveTimer = ({ startTime, isPaused, pauseStartTime, accumulatedPauseSeconds }) => {
   const [time, setTime] = useState('00:00:00');
-
   useEffect(() => {
     if (!startTime) return;
     const interval = setInterval(() => {
       let now = new Date().getTime();
-      // Si está en pausa, congelamos el tiempo en el momento que se pausó
-      if (isPaused && pauseStartTime) {
-        now = new Date(pauseStartTime).getTime();
-      }
-      // Calculamos la diferencia restando también los segundos de pausas anteriores
+      if (isPaused && pauseStartTime) now = new Date(pauseStartTime).getTime();
       const diff = now - new Date(startTime).getTime() - ((accumulatedPauseSeconds || 0) * 1000);
-      
       const h = Math.floor(diff / (1000 * 60 * 60)).toString().padStart(2, '0');
       const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)).toString().padStart(2, '0');
       const s = Math.floor((diff % (1000 * 60)) / 1000).toString().padStart(2, '0');
@@ -30,31 +21,25 @@ const LiveTimer = ({ startTime, isPaused, pauseStartTime, accumulatedPauseSecond
     }, 1000);
     return () => clearInterval(interval);
   }, [startTime, isPaused, pauseStartTime, accumulatedPauseSeconds]);
-
   return <>{time}</>;
 };
 
-// ==========================================
-// HELPER: CAPTURADOR DE GPS INVISIBLE
-// ==========================================
 const getCoordinates = () => {
   return new Promise((resolve) => {
     if (!navigator.geolocation) return resolve({ lat: null, lng: null });
     navigator.geolocation.getCurrentPosition(
       (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
       (err) => resolve({ lat: null, lng: null }),
-      { enableHighAccuracy: false, timeout: 4000 } // Rápido, sin trabar la app
+      { enableHighAccuracy: false, timeout: 4000 }
     );
   });
 };
 
-// ==========================================
-// COMPONENTE PRINCIPAL: JORNADA
-// ==========================================
 export const ShiftModule = () => {
   const { data: vehiculos, loading: loadV, refetch: refetchVehiculos } = useSupabaseQuery('vehiculos');
   const { data: cuentas, loading: loadC } = useSupabaseQuery('nexus_cuentas');
   const { data: jornadasActivas, refetch: refetchJornadas } = useSupabaseQuery('nexus_jornadas');
+  const { data: categoriasAll } = useSupabaseQuery('nexus_categories');
 
   const activeShift = jornadasActivas?.find(j => j.estado === 'Activa' || j.estado === 'Pausada');
   const activeVehicle = vehiculos?.find(v => v.id === activeShift?.vehiculo_id);
@@ -65,7 +50,7 @@ export const ShiftModule = () => {
   
   const [showIncomeModal, setShowIncomeModal] = useState(false);
   const [showExpenseModal, setShowExpenseModal] = useState(false);
-  const [txForm, setTxForm] = useState({ tipo: 'Uber', metodo: 'Efectivo', monto: '', cuenta_id: '', porcentaje_cashback: '' });
+  const [txForm, setTxForm] = useState({ categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: '', porcentaje_cashback: '' });
 
   const [showChecklist, setShowChecklist] = useState(false);
   const [checklistItems, setChecklistItems] = useState({ aceite: false, refrigerante: false, llantas: false, limpieza: false });
@@ -97,125 +82,96 @@ export const ShiftModule = () => {
   };
 
   const handleStartShift = async () => {
-    triggerHaptic('medium');
-    setIsSubmitting(true);
+    triggerHaptic('medium'); setIsSubmitting(true);
     try {
       if (!startForm.vehiculo_id) throw new Error("No hay vehículo seleccionado.");
-      
       const selectedVehicle = vehiculos.find(v => v.id === startForm.vehiculo_id);
       const odometroIngresado = parseFloat(startForm.odometro_inicial);
       const diffMillasPersonales = odometroIngresado - (selectedVehicle.millaje_actual || 0);
 
-      // 1. AUDITORÍA DE MILLAS
       if (diffMillasPersonales > 0) {
           await supabase.from('vehiculos').update({ millaje_actual: odometroIngresado }).eq('id', selectedVehicle.id);
       } else if (diffMillasPersonales < 0) {
           throw new Error("El odómetro ingresado es menor al registrado en el garaje.");
       }
 
-      // 2. CAPTURA GPS
       const coords = await getCoordinates();
-
-      // 3. INICIAR JORNADA
       const { error } = await supabase.from('nexus_jornadas').insert([{
-        vehiculo_id: startForm.vehiculo_id,
-        hora_inicio: new Date(startForm.hora_inicio).toISOString(),
-        odometro_inicial: odometroIngresado,
-        estado: 'Activa',
-        lat_inicio: coords.lat,
-        lng_inicio: coords.lng
+        vehiculo_id: startForm.vehiculo_id, hora_inicio: new Date(startForm.hora_inicio).toISOString(),
+        odometro_inicial: odometroIngresado, estado: 'Activa', lat_inicio: coords.lat, lng_inicio: coords.lng
       }]);
       
       if (error) throw error;
-      
-      triggerHaptic('heavy');
-      setShowChecklist(false);
+      triggerHaptic('heavy'); setShowChecklist(false);
       setChecklistItems({ aceite: false, refrigerante: false, llantas: false, limpieza: false });
-      refetchJornadas();
-      refetchVehiculos();
-    } catch (err) {
-      triggerHaptic('heavy');
-      alert(`Error al iniciar: ${err.message}`);
-    } finally { setIsSubmitting(false); }
+      refetchJornadas(); refetchVehiculos();
+    } catch (err) { triggerHaptic('heavy'); alert(`Error al iniciar: ${err.message}`); } finally { setIsSubmitting(false); }
   };
 
-  // HANDLER: PAUSA Y REANUDACIÓN
   const handleTogglePause = async () => {
-    triggerHaptic('heavy');
-    setIsSubmitting(true);
+    triggerHaptic('heavy'); setIsSubmitting(true);
     try {
       if (activeShift.estado === 'Activa') {
-        // Pausar
-        await supabase.from('nexus_jornadas').update({
-          estado: 'Pausada',
-          inicio_pausa: new Date().toISOString()
-        }).eq('id', activeShift.id);
+        await supabase.from('nexus_jornadas').update({ estado: 'Pausada', inicio_pausa: new Date().toISOString() }).eq('id', activeShift.id);
       } else {
-        // Reanudar
-        const now = new Date().getTime();
-        const startPause = new Date(activeShift.inicio_pausa).getTime();
+        const now = new Date().getTime(); const startPause = new Date(activeShift.inicio_pausa).getTime();
         const diffSeconds = Math.floor((now - startPause) / 1000);
         const newAccumulated = (activeShift.segundos_pausa || 0) + diffSeconds;
-
-        await supabase.from('nexus_jornadas').update({
-          estado: 'Activa',
-          inicio_pausa: null,
-          segundos_pausa: newAccumulated
-        }).eq('id', activeShift.id);
+        await supabase.from('nexus_jornadas').update({ estado: 'Activa', inicio_pausa: null, segundos_pausa: newAccumulated }).eq('id', activeShift.id);
       }
       refetchJornadas();
-    } catch (err) { alert(err.message); }
-    finally { setIsSubmitting(false); }
+    } catch (err) { alert(err.message); } finally { setIsSubmitting(false); }
   };
 
   const handleTransaction = async (e, type) => {
-    e.preventDefault();
-    triggerHaptic('medium');
-    setIsSubmitting(true);
+    e.preventDefault(); triggerHaptic('medium'); setIsSubmitting(true);
     const monto = parseFloat(txForm.monto);
 
     try {
       const cuenta = cuentas.find(c => c.id === txForm.cuenta_id);
       if (!cuenta) throw new Error("Selecciona una cuenta válida");
 
+      const categoria = categoriasAll.find(c => c.id === txForm.categoria_id);
+      if (!categoria) throw new Error("Debes seleccionar un Rubro/Categoría");
+
       let cbGenerado = 0;
       if (type === 'egreso' && (cuenta.tipo === 'Crédito' || cuenta.tipo === 'Débito') && parseFloat(txForm.porcentaje_cashback) > 0) {
         cbGenerado = monto * (parseFloat(txForm.porcentaje_cashback) / 100);
       }
 
+      // Inserción en movimientos (Vinculado a Categoría Dinámica)
       const { error: movError } = await supabase.from('nexus_movimientos').insert([{
-        cuenta_id: cuenta.id, jornada_id: activeShift.id, 
+        cuenta_id: cuenta.id, jornada_id: activeShift.id, categoria_id: categoria.id,
         tipo: type === 'ingreso' ? 'Ingreso' : 'Egreso', monto: monto,
-        cashback_generado: cbGenerado, descripcion: `Jornada: ${txForm.tipo} (${txForm.metodo})`
+        cashback_generado: cbGenerado, descripcion: `Jornada: ${categoria.nombre} (${txForm.metodo})`
       }]);
       if (movError) throw movError;
 
       let nuevoSaldo = Number(cuenta.saldo_actual);
-      nuevoSaldo = cuenta.tipo === 'Crédito' 
-        ? (type === 'ingreso' ? nuevoSaldo - monto : nuevoSaldo + monto)
-        : (type === 'ingreso' ? nuevoSaldo + monto : nuevoSaldo - monto);
-      
+      nuevoSaldo = cuenta.tipo === 'Crédito' ? (type === 'ingreso' ? nuevoSaldo - monto : nuevoSaldo + monto) : (type === 'ingreso' ? nuevoSaldo + monto : nuevoSaldo - monto);
       const nuevoCashbackAcumulado = Number(cuenta.cashback_acumulado || 0) + cbGenerado;
       await supabase.from('nexus_cuentas').update({ saldo_actual: nuevoSaldo, cashback_acumulado: nuevoCashbackAcumulado }).eq('id', cuenta.id);
 
+      // Puente de compatibilidad para la tabla jornadas (Resume visual)
       let updateData = {};
+      const catNombre = categoria.nombre.toLowerCase();
+      
       if (type === 'ingreso') {
-        if (txForm.tipo === 'Uber') updateData = { ingresos_uber: Number(activeShift.ingresos_uber) + monto };
-        if (txForm.tipo === 'InDrive') updateData = { ingresos_indrive: Number(activeShift.ingresos_indrive) + monto };
-        if (txForm.tipo === 'Propina') updateData = { propinas: Number(activeShift.propinas) + monto };
+        if (catNombre.includes('uber')) updateData = { ingresos_uber: Number(activeShift.ingresos_uber) + monto };
+        else if (catNombre.includes('indrive')) updateData = { ingresos_indrive: Number(activeShift.ingresos_indrive) + monto };
+        else updateData = { propinas: Number(activeShift.propinas) + monto };
       } else {
-        if (txForm.tipo === 'Gasolina') updateData = { gastos_combustible: Number(activeShift.gastos_combustible) + monto };
-        if (txForm.tipo === 'Comida/Otro') updateData = { gastos_otros: Number(activeShift.gastos_otros) + monto };
+        if (catNombre.includes('gasolina') || catNombre.includes('combustible')) updateData = { gastos_combustible: Number(activeShift.gastos_combustible) + monto };
+        else updateData = { gastos_otros: Number(activeShift.gastos_otros) + monto };
       }
       
       await supabase.from('nexus_jornadas').update(updateData).eq('id', activeShift.id);
 
       triggerHaptic('heavy');
       setShowIncomeModal(false); setShowExpenseModal(false);
-      setTxForm({ tipo: 'Uber', metodo: 'Efectivo', monto: '', cuenta_id: '', porcentaje_cashback: '' });
+      setTxForm({ categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: '', porcentaje_cashback: '' });
       refetchJornadas();
-    } catch (err) { alert(err.message); } 
-    finally { setIsSubmitting(false); }
+    } catch (err) { alert(err.message); } finally { setIsSubmitting(false); }
   };
 
   const prepareCheckout = () => {
@@ -229,19 +185,14 @@ export const ShiftModule = () => {
     e.preventDefault(); triggerHaptic('medium'); setIsSubmitting(true);
     
     if(parseFloat(endForm.odometro_final) < parseFloat(activeShift.odometro_inicial)) {
-        setIsSubmitting(false);
-        return alert("Error: El odómetro final no puede ser menor que el inicial.");
+        setIsSubmitting(false); return alert("Error: El odómetro final no puede ser menor que el inicial.");
     }
 
     try {
-      const coords = await getCoordinates(); // Captura GPS de cierre
-
+      const coords = await getCoordinates();
       await supabase.from('nexus_jornadas').update({
-        hora_fin: new Date(endForm.hora_fin).toISOString(), 
-        odometro_final: parseFloat(endForm.odometro_final), 
-        estado: 'Finalizada',
-        lat_fin: coords.lat,
-        lng_fin: coords.lng
+        hora_fin: new Date(endForm.hora_fin).toISOString(), odometro_final: parseFloat(endForm.odometro_final), 
+        estado: 'Finalizada', lat_fin: coords.lat, lng_fin: coords.lng
       }).eq('id', activeShift.id);
       
       await supabase.from('vehiculos').update({ millaje_actual: parseFloat(endForm.odometro_final) }).eq('id', activeShift.vehiculo_id);
@@ -262,9 +213,7 @@ export const ShiftModule = () => {
           const cuenta = cuentas.find(c => c.id === mov.cuenta_id);
           if (cuenta) {
             let saldoRev = Number(cuenta.saldo_actual);
-            saldoRev = cuenta.tipo === 'Crédito' 
-              ? (mov.tipo === 'Ingreso' ? saldoRev + Number(mov.monto) : saldoRev - Number(mov.monto))
-              : (mov.tipo === 'Ingreso' ? saldoRev - Number(mov.monto) : saldoRev + Number(mov.monto));
+            saldoRev = cuenta.tipo === 'Crédito' ? (mov.tipo === 'Ingreso' ? saldoRev + Number(mov.monto) : saldoRev - Number(mov.monto)) : (mov.tipo === 'Ingreso' ? saldoRev - Number(mov.monto) : saldoRev + Number(mov.monto));
             let cbRev = Number(cuenta.cashback_acumulado);
             if (mov.cashback_generado) cbRev -= Number(mov.cashback_generado);
             await supabase.from('nexus_cuentas').update({ saldo_actual: saldoRev, cashback_acumulado: cbRev }).eq('id', cuenta.id);
@@ -295,7 +244,6 @@ export const ShiftModule = () => {
     depreciacion = millasRecorridas * costoPorMilla;
     fondoMantenimiento = ((vehicleSummary.meta_mantenimiento || 0) / 30);
     
-    // Cálculo de horas reales (descontando pausas)
     const totalMs = new Date(shiftToSummary.hora_fin || new Date()) - new Date(shiftToSummary.hora_inicio);
     const pauseMs = (shiftToSummary.segundos_pausa || 0) * 1000;
     horasTrabajadas = (totalMs - pauseMs) / (1000 * 60 * 60);
@@ -303,6 +251,9 @@ export const ShiftModule = () => {
 
   const utilidadNeta = totalIngresos - totalGastos - depreciacion - fondoMantenimiento;
   const historialJornadas = jornadasActivas?.filter(j => j.estado === 'Finalizada').sort((a,b) => new Date(b.hora_fin) - new Date(a.hora_fin)) || [];
+
+  // Categorías dinámicas para los modales
+  const filteredCats = categoriasAll?.filter(c => c.tipo === (showIncomeModal ? 'Ingreso' : 'Egreso')) || [];
 
   return (
     <div className="w-full text-white font-sans relative pb-32 animate-in fade-in duration-700">
@@ -370,7 +321,6 @@ export const ShiftModule = () => {
             </form>
           </div>
 
-          {/* HISTORIAL */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-6 px-2">
               <History size={16} className="text-white/30" />
@@ -422,7 +372,6 @@ export const ShiftModule = () => {
                         {activeShift.estado === 'Pausada' ? 'En Descanso' : 'Turno Activo'}
                     </span>
                 </div>
-                {/* Indicador GPS */}
                 {activeShift.lat_inicio && (
                    <div className="flex items-center gap-1 text-[8px] text-white/30 uppercase tracking-widest font-black">
                        <Navigation size={10} className="text-cyan-500" /> GPS OK
@@ -431,12 +380,7 @@ export const ShiftModule = () => {
             </div>
             
             <h1 className={`text-6xl md:text-7xl font-mono font-black tracking-tighter drop-shadow-[0_0_20px_rgba(255,255,255,0.3)] relative z-10 my-4 ${activeShift.estado === 'Pausada' ? 'text-orange-100 opacity-50' : 'text-white'}`}>
-              <LiveTimer 
-                startTime={activeShift.hora_inicio} 
-                isPaused={activeShift.estado === 'Pausada'} 
-                pauseStartTime={activeShift.inicio_pausa} 
-                accumulatedPauseSeconds={activeShift.segundos_pausa} 
-              />
+              <LiveTimer startTime={activeShift.hora_inicio} isPaused={activeShift.estado === 'Pausada'} pauseStartTime={activeShift.inicio_pausa} accumulatedPauseSeconds={activeShift.segundos_pausa} />
             </h1>
             
             <p className="text-[10px] text-white/40 font-mono tracking-[0.2em] uppercase relative z-10">
@@ -451,11 +395,11 @@ export const ShiftModule = () => {
               </button>
           ) : (
             <div className="grid grid-cols-2 gap-4">
-              <button onClick={() => { triggerHaptic('light'); setTxForm({tipo: 'Uber', metodo: 'Efectivo', monto: '', cuenta_id: '', porcentaje_cashback: ''}); setShowIncomeModal(true); }} className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 py-10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 transition-all active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: '', porcentaje_cashback: ''}); setShowIncomeModal(true); }} className="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 py-10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 transition-all active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                 <div className="w-14 h-14 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-xl"><Plus size={30} strokeWidth={3} /></div>
                 <span className="text-[11px] font-black uppercase tracking-widest text-emerald-400">Ingreso</span>
               </button>
-              <button onClick={() => { triggerHaptic('light'); setTxForm({tipo: 'Gasolina', metodo: 'Tarjeta', monto: '', cuenta_id: '', porcentaje_cashback: ''}); setShowExpenseModal(true); }} className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 py-10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 transition-all active:scale-95 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
+              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Tarjeta', monto: '', cuenta_id: '', porcentaje_cashback: ''}); setShowExpenseModal(true); }} className="bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 py-10 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 transition-all active:scale-95 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
                 <div className="w-14 h-14 rounded-full bg-red-500 text-white flex items-center justify-center shadow-xl"><Minus size={30} strokeWidth={3} /></div>
                 <span className="text-[11px] font-black uppercase tracking-widest text-red-400">Gasto</span>
               </button>
@@ -551,8 +495,8 @@ export const ShiftModule = () => {
             </div>
 
             <div className="space-y-6 relative z-10">
-              <MetricRow label="Ingresos" value={`+$${totalIngresos.toFixed(2)}`} color="text-emerald-400" />
-              <MetricRow label="Gastos" value={`-$${totalGastos.toFixed(2)}`} color="text-red-400" />
+              <MetricRow label="Ingresos Totales" value={`+$${totalIngresos.toFixed(2)}`} color="text-emerald-400" />
+              <MetricRow label="Gastos Operativos" value={`-$${totalGastos.toFixed(2)}`} color="text-red-400" />
               <MetricRow label="Depreciación" value={`-$${depreciacion.toFixed(2)}`} color="text-yellow-400" subtext={`$${costoPorMilla?.toFixed(2)} / mi`} />
               <MetricRow label="Mantenimiento" value={`-$${fondoMantenimiento.toFixed(2)}`} color="text-purple-400" />
               
@@ -613,33 +557,42 @@ export const ShiftModule = () => {
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8 md:hidden"></div>
             <button onClick={() => { triggerHaptic('light'); setShowIncomeModal(false); setShowExpenseModal(false); }} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block active:scale-90"><X size={20} /></button>
             <h2 className="text-3xl font-black tracking-tighter text-white mb-8 flex items-center gap-3">{showIncomeModal ? <><Plus className="text-emerald-400" /> Ingreso</> : <><Minus className="text-red-400" /> Gasto</>}</h2>
+            
             <form onSubmit={(e) => handleTransaction(e, showIncomeModal ? 'ingreso' : 'egreso')} className="space-y-5">
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Tipo</label>
-                  <select value={txForm.tipo} onChange={e => setTxForm({...txForm, tipo: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white font-bold p-4 rounded-2xl outline-none appearance-none">
-                    {showIncomeModal ? <><option className="bg-black" value="Uber">Uber</option><option className="bg-black" value="InDrive">InDrive</option><option className="bg-black" value="Propina">Propina</option></> : <><option className="bg-black" value="Gasolina">Combustible</option><option className="bg-black" value="Comida/Otro">Comida</option></>}
+                  <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Rubro</label>
+                  <select required value={txForm.categoria_id} onChange={e => setTxForm({...txForm, categoria_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white font-bold p-4 rounded-2xl outline-none appearance-none focus:border-white/30 transition-all">
+                    <option value="" disabled className="bg-black text-white/40">Selecciona...</option>
+                    {filteredCats?.map(c => <option className="bg-black" key={c.id} value={c.id}>{c.nombre}</option>)}
                   </select>
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">{showIncomeModal ? 'Pago' : 'Con'}</label>
                   <select value={txForm.metodo} onChange={e => setTxForm({...txForm, metodo: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white font-bold p-4 rounded-2xl outline-none appearance-none">
-                    <option className="bg-black" value="Efectivo">Efectivo</option><option className="bg-black" value="Tarjeta">Tarjeta</option>
+                    <option className="bg-black" value="Efectivo">Efectivo</option>
+                    <option className="bg-black" value="Tarjeta">Tarjeta</option>
                   </select>
                 </div>
               </div>
+
               <div className="space-y-1.5 pt-2">
-                <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Cuenta</label>
+                <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Cuenta a afectar</label>
                 <select required value={txForm.cuenta_id} onChange={e => setTxForm({...txForm, cuenta_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white font-bold p-4 rounded-2xl outline-none appearance-none focus:border-white/30">
                   <option value="" disabled className="bg-black text-white/40">Selecciona...</option>
                   {cuentas?.map(c => <option className="bg-black" key={c.id} value={c.id}>{c.nombre_cuenta} ({c.tipo})</option>)}
                 </select>
               </div>
+
               <div className="space-y-1.5 pt-2">
                 <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Monto ($)</label>
                 <input type="number" step="0.01" autoFocus required value={txForm.monto} onChange={e => setTxForm({...txForm, monto: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white text-3xl font-black p-5 rounded-2xl outline-none font-mono focus:bg-white/10 transition-all" placeholder="0.00" />
               </div>
-              <button type="submit" disabled={isSubmitting} className={`w-full py-5 mt-6 text-black font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-95 transition-all shadow-lg ${showIncomeModal ? 'bg-emerald-400 hover:bg-emerald-500' : 'bg-red-400 hover:bg-red-500'}`}>{isSubmitting ? 'Procesando...' : 'Confirmar'}</button>
+
+              <button type="submit" disabled={isSubmitting} className={`w-full py-5 mt-6 text-black font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-95 transition-all shadow-lg ${showIncomeModal ? 'bg-emerald-400 hover:bg-emerald-500' : 'bg-red-400 hover:bg-red-500'}`}>
+                {isSubmitting ? 'Procesando...' : 'Confirmar'}
+              </button>
             </form>
           </div>
         </div>

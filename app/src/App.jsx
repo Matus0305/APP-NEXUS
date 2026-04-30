@@ -34,7 +34,7 @@ const MainContent = () => {
         <div key={location.pathname} className="max-w-5xl mx-auto h-full animate-fade-in-up">
           <Routes>
             <Route path="/" element={<DummyModule title="DASHBOARD_ACTIVO" />} />
-            <Route path="/shifts" element={<ShiftModule />} />
+            <Route path="/Shifts" element={<ShiftModule />} />
             <Route path="/fleet" element={<FleetManagement />} />
             <Route path="/flow" element={<FlowModule />} />
             <Route path="/logistics" element={<LogisticsModule />} />
