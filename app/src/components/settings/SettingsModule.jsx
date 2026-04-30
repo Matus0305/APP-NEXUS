@@ -4,7 +4,7 @@ import { useSupabaseQuery } from '../../hooks/useSupabase';
 import { triggerHaptic } from '../../utils/haptics';
 import { 
   User, Shield, Camera, Save, CheckCircle2, EyeOff, 
-  UserCircle, Lock, Bell, Tags, ListChecks, Plus, Trash2, TrendingUp, TrendingDown, Box
+  UserCircle, Lock, Bell, Tags, ListChecks, Plus, Trash2, TrendingUp, TrendingDown, Box, Target, DollarSign
 } from 'lucide-react';
 
 export const SettingsModule = () => {
@@ -16,12 +16,13 @@ export const SettingsModule = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   
+  // AÑADIDO: Campos de metas financieras en formData
   const [formData, setFormData] = useState({
     nombre: '', apellido: '', profesion: '', 
-    avatar_url: '', fecha_nacimiento: '', modo_privacidad: false, alertas_activadas: true
+    avatar_url: '', fecha_nacimiento: '', modo_privacidad: false, alertas_activadas: true,
+    meta_ingreso_mensual: '', salario_hora_deseado: ''
   });
   
-  // AÑADIDO: 'modulo' inicializado en 'General'
   const [catForm, setCatForm] = useState({ nombre: '', tipo: 'Egreso', presupuesto_mensual: '', modulo: 'General' });
   const [checkForm, setCheckForm] = useState({ tarea: '' });
 
@@ -31,7 +32,9 @@ export const SettingsModule = () => {
       setFormData({
         nombre: p.nombre || '', apellido: p.apellido || '', profesion: p.profesion || '',
         avatar_url: p.avatar_url || '', fecha_nacimiento: p.fecha_nacimiento || '',
-        modo_privacidad: p.modo_privacidad || false, alertas_activadas: p.alertas_activadas ?? true
+        modo_privacidad: p.modo_privacidad || false, alertas_activadas: p.alertas_activadas ?? true,
+        meta_ingreso_mensual: p.meta_ingreso_mensual || '',
+        salario_hora_deseado: p.salario_hora_deseado || ''
       });
     }
   }, [profileData]);
@@ -40,10 +43,17 @@ export const SettingsModule = () => {
     if (e) e.preventDefault();
     triggerHaptic('medium'); setIsSubmitting(true);
     try {
+      const payload = {
+          ...formData, 
+          meta_ingreso_mensual: parseFloat(formData.meta_ingreso_mensual) || 0,
+          salario_hora_deseado: parseFloat(formData.salario_hora_deseado) || 0,
+          updated_at: new Date().toISOString() 
+      };
+
       if (!profileData || profileData.length === 0) {
-        await supabase.from('nexus_profile').insert([{ ...formData, updated_at: new Date().toISOString() }]);
+        await supabase.from('nexus_profile').insert([payload]);
       } else {
-        await supabase.from('nexus_profile').update({ ...formData, updated_at: new Date().toISOString() }).eq('id', profileData[0].id);
+        await supabase.from('nexus_profile').update(payload).eq('id', profileData[0].id);
       }
       triggerSuccess(); refetchProfile();
     } catch (err) { alert("Error: " + err.message); } finally { setIsSubmitting(false); }
@@ -106,7 +116,7 @@ export const SettingsModule = () => {
 
         <div className="flex gap-2 p-1.5 bg-[#0A0A0A]/60 backdrop-blur-xl border border-white/5 rounded-2xl w-full overflow-x-auto hide-scrollbar">
             {['Identidad', 'Finanzas', 'Operaciones'].map(tab => (
-              <button key={tab} onClick={() => { triggerHaptic('light'); setActiveTab(tab); }} className={`flex-1 min-w-25 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{tab}</button>
+              <button key={tab} onClick={() => { triggerHaptic('light'); setActiveTab(tab); }} className={`flex-1 min-w-[100px] px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{tab}</button>
             ))}
         </div>
 
@@ -184,6 +194,27 @@ export const SettingsModule = () => {
 
         {activeTab === 'Finanzas' && (
             <div className="space-y-6 animate-in zoom-in-95 duration-300">
+                {/* AÑADIDO: Configuración de Metas Globales */}
+                <div className="bg-[#0A0A0A]/60 backdrop-blur-3xl border border-white/5 rounded-4xl p-6 md:p-10 shadow-2xl relative mb-6">
+                    <div className="flex items-center gap-3 border-b border-white/5 pb-4 mb-6">
+                        <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400"><Target size={18} /></div>
+                        <h2 className="text-[11px] font-black uppercase tracking-widest text-white/60">Metas y Expectativas</h2>
+                    </div>
+                    <form onSubmit={handleSaveProfile} className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                         <div className="space-y-1.5 w-full">
+                            <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1 flex items-center gap-2"><DollarSign size={10}/> Meta Ingreso Mensual ($)</label>
+                            <input type="number" step="0.01" value={formData.meta_ingreso_mensual} onChange={e => setFormData({...formData, meta_ingreso_mensual: e.target.value})} className="w-full bg-black/40 border border-white/5 text-emerald-400 text-2xl font-mono font-black p-4 rounded-2xl focus:border-emerald-500/30 outline-none transition-all placeholder:text-white/10" placeholder="1500.00" />
+                        </div>
+                         <div className="space-y-1.5 w-full">
+                            <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1 flex items-center gap-2"><Clock size={10}/> Valor Hora Esperado ($)</label>
+                            <input type="number" step="0.01" value={formData.salario_hora_deseado} onChange={e => setFormData({...formData, salario_hora_deseado: e.target.value})} className="w-full bg-black/40 border border-white/5 text-cyan-400 text-2xl font-mono font-black p-4 rounded-2xl focus:border-cyan-500/30 outline-none transition-all placeholder:text-white/10" placeholder="10.00" />
+                        </div>
+                        <button type="submit" disabled={isSubmitting} className="w-full md:col-span-2 py-5 bg-white/5 hover:bg-white border border-white/10 hover:text-black text-white font-black uppercase tracking-widest text-[10px] rounded-2xl active:scale-95 transition-all">
+                           {isSubmitting ? 'Guardando...' : 'Fijar Objetivos'}
+                        </button>
+                    </form>
+                </div>
+
                 <div className="bg-[#0A0A0A]/60 backdrop-blur-3xl border border-white/5 rounded-4xl p-6 md:p-10 shadow-2xl relative">
                     <div className="flex items-center gap-3 border-b border-white/5 pb-4 mb-6">
                         <div className="p-2 bg-purple-500/10 rounded-xl text-purple-400"><Tags size={18} /></div>
@@ -214,13 +245,13 @@ export const SettingsModule = () => {
                             {catForm.tipo === 'Egreso' && catForm.modulo === 'General' ? (
                                 <Input label="Presupuesto Mensual ($)" type="number" step="0.01" value={catForm.presupuesto_mensual} onChange={e => setCatForm({...catForm, presupuesto_mensual: e.target.value})} placeholder="0.00" />
                             ) : (
-                                <button type="submit" disabled={isSubmitting} className={`w-full h-13 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 ${catForm.tipo === 'Egreso' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}>
+                                <button type="submit" disabled={isSubmitting} className={`w-full h-[52px] rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 ${catForm.tipo === 'Egreso' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}>
                                     <Plus size={16} /> Agregar
                                 </button>
                             )}
                         </div>
                         {catForm.tipo === 'Egreso' && catForm.modulo === 'General' && (
-                             <button type="submit" disabled={isSubmitting} className="w-full mt-4 h-13 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 bg-red-500 text-white">
+                             <button type="submit" disabled={isSubmitting} className="w-full mt-4 h-[52px] rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 bg-red-500 text-white">
                                  <Plus size={16} /> Agregar
                              </button>
                         )}
