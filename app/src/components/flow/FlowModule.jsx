@@ -6,7 +6,7 @@ import { triggerHaptic } from '../../utils/haptics';
 import { 
   Wallet, CreditCard, Landmark, ArrowLeft, Plus, 
   ArrowUpRight, ArrowDownRight, X, History, TrendingUp, AlertCircle, 
-  Target, Trash2, PiggyBank, Sparkles, Banknote, Calendar, ArrowRightLeft, Pencil
+  Target, Trash2, PiggyBank, Sparkles, Banknote, Calendar, ArrowRightLeft, Pencil, Tags
 } from 'lucide-react';
 
 const StatsCard = ({ title, amount, icon, color }) => (
@@ -32,9 +32,10 @@ const Input = ({ label, ...props }) => (
 );
 
 export const FlowModule = () => {
-  // 1. DATA FETCHING & PRIVACY
+  // 1. DATA FETCHING (Ahora incluye las Categorías Dinámicas)
   const { privacyClass } = usePrivacy(); 
   const { data: cuentas, loading: loadingCuentas, refetch: refetchCuentas } = useSupabaseQuery('nexus_cuentas');
+  const { data: categoriasAll } = useSupabaseQuery('nexus_categories');
   
   // 2. NAVEGACIÓN Y ESTADOS
   const [activeTab, setActiveTab] = useState('Efectivo');
@@ -49,13 +50,14 @@ export const FlowModule = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // ESTADO INICIAL DE LA CUENTA (Con ID para edición)
   const initialAccountState = {
     id: null, nombre_cuenta: '', tipo: 'Efectivo', banco: 'Efectivo', ultimos_digitos: '', color_tarjeta: '#10b981',
     saldo_actual: '', limite_credito: '', tasa_rendimiento: '', reglas_cashback: '', fecha_corte: '', fecha_pago: '', cashback_acumulado: ''
   };
   const [accountForm, setAccountForm] = useState(initialAccountState);
-  const [movForm, setMovForm] = useState({ tipo: 'Egreso', monto: '', descripcion: '', porcentaje_cashback: '' });
+  
+  // AÑADIDO: 'categoria_id' al formulario de movimientos
+  const [movForm, setMovForm] = useState({ tipo: 'Egreso', monto: '', descripcion: '', porcentaje_cashback: '', categoria_id: '' });
   const [transferForm, setTransferForm] = useState({ origen_id: '', destino_id: '', monto: '', descripcion: 'Transferencia interna' });
 
   // 4. EFECTOS
@@ -65,43 +67,36 @@ export const FlowModule = () => {
 
   const fetchMovimientos = async (cuentaId) => {
     setLoadingMovs(true);
+    // Hacemos un JOIN para traer el nombre de la categoría junto con el movimiento
     const { data, error } = await supabase
       .from('nexus_movimientos')
-      .select('*')
+      .select('*, nexus_categories(nombre)')
       .eq('cuenta_id', cuentaId)
       .order('fecha', { ascending: false });
     if (!error) setMovimientos(data);
     setLoadingMovs(false);
   };
 
-  // 5. INTELIGENCIA FINANCIERA (CÁLCULOS MACRO)
   const liquidezTotal = cuentas?.filter(c => c.tipo !== 'Crédito').reduce((acc, curr) => acc + Number(curr.saldo_actual), 0) || 0;
   const deudaTotal = cuentas?.filter(c => c.tipo === 'Crédito').reduce((acc, curr) => acc + Number(curr.saldo_actual), 0) || 0;
   const filtradas = cuentas?.filter(c => c.tipo === activeTab) || [];
 
+  // Categorías filtradas por tipo de transacción para el selector
+  const categoriasFiltradas = categoriasAll?.filter(c => c.tipo === movForm.tipo) || [];
+
   // 6. HANDLERS
-  
-  // Handler para abrir modal de edición con los datos cargados
   const handleEditClick = () => {
     triggerHaptic('light');
     setAccountForm({
-      id: selectedAccount.id,
-      nombre_cuenta: selectedAccount.nombre_cuenta || '',
-      tipo: selectedAccount.tipo || 'Efectivo',
-      banco: selectedAccount.banco || '',
-      ultimos_digitos: selectedAccount.ultimos_digitos || '',
-      color_tarjeta: selectedAccount.color_tarjeta || '#10b981',
-      saldo_actual: selectedAccount.saldo_actual || '',
-      limite_credito: selectedAccount.limite_credito || '',
-      tasa_rendimiento: selectedAccount.tasa_rendimiento || '',
-      cashback_acumulado: selectedAccount.cashback_acumulado || '',
-      fecha_corte: selectedAccount.fecha_corte || '',
-      fecha_pago: selectedAccount.fecha_pago || ''
+      id: selectedAccount.id, nombre_cuenta: selectedAccount.nombre_cuenta || '', tipo: selectedAccount.tipo || 'Efectivo',
+      banco: selectedAccount.banco || '', ultimos_digitos: selectedAccount.ultimos_digitos || '', color_tarjeta: selectedAccount.color_tarjeta || '#10b981',
+      saldo_actual: selectedAccount.saldo_actual || '', limite_credito: selectedAccount.limite_credito || '',
+      tasa_rendimiento: selectedAccount.tasa_rendimiento || '', cashback_acumulado: selectedAccount.cashback_acumulado || '',
+      fecha_corte: selectedAccount.fecha_corte || '', fecha_pago: selectedAccount.fecha_pago || ''
     });
     setShowAccountForm(true);
   };
 
-  // Handler centralizado para cerrar y limpiar el formulario de cuenta
   const closeAccountForm = () => {
     triggerHaptic('light');
     setShowAccountForm(false);
@@ -114,35 +109,23 @@ export const FlowModule = () => {
     setIsSubmitting(true);
     try {
       const payload = {
-        nombre_cuenta: accountForm.nombre_cuenta,
-        tipo: accountForm.tipo,
-        banco: accountForm.banco,
-        ultimos_digitos: accountForm.ultimos_digitos,
-        color_tarjeta: accountForm.color_tarjeta,
-        saldo_actual: parseFloat(accountForm.saldo_actual) || 0,
-        limite_credito: parseFloat(accountForm.limite_credito) || 0,
-        tasa_rendimiento: parseFloat(accountForm.tasa_rendimiento) || 0,
-        cashback_acumulado: parseFloat(accountForm.cashback_acumulado) || 0,
+        nombre_cuenta: accountForm.nombre_cuenta, tipo: accountForm.tipo, banco: accountForm.banco,
+        ultimos_digitos: accountForm.ultimos_digitos, color_tarjeta: accountForm.color_tarjeta,
+        saldo_actual: parseFloat(accountForm.saldo_actual) || 0, limite_credito: parseFloat(accountForm.limite_credito) || 0,
+        tasa_rendimiento: parseFloat(accountForm.tasa_rendimiento) || 0, cashback_acumulado: parseFloat(accountForm.cashback_acumulado) || 0,
         fecha_corte: accountForm.fecha_corte ? parseInt(accountForm.fecha_corte) : null,
         fecha_pago: accountForm.fecha_pago ? parseInt(accountForm.fecha_pago) : null,
       };
 
       if (accountForm.id) {
-        // ACTUALIZAR CUENTA EXISTENTE
         const { error } = await supabase.from('nexus_cuentas').update(payload).eq('id', accountForm.id);
         if (error) throw error;
-        // Actualizamos la vista detallada si está abierta
         setSelectedAccount({ ...selectedAccount, ...payload });
       } else {
-        // CREAR NUEVA CUENTA
         const { error } = await supabase.from('nexus_cuentas').insert([payload]);
         if (error) throw error;
       }
-      
-      triggerHaptic('heavy');
-      setShowAccountForm(false);
-      setAccountForm(initialAccountState);
-      refetchCuentas();
+      triggerHaptic('heavy'); setShowAccountForm(false); setAccountForm(initialAccountState); refetchCuentas();
     } catch (err) { triggerHaptic('heavy'); alert(`Error: ${err.message}`); } 
     finally { setIsSubmitting(false); }
   };
@@ -157,9 +140,14 @@ export const FlowModule = () => {
       if ((selectedAccount.tipo === 'Crédito' || selectedAccount.tipo === 'Débito') && movForm.tipo === 'Egreso' && parseFloat(movForm.porcentaje_cashback) > 0) {
         cbGenerado = monto * (parseFloat(movForm.porcentaje_cashback) / 100);
       }
+      
       const { error } = await supabase.from('nexus_movimientos').insert([{
-        tipo: movForm.tipo, monto: monto, descripcion: movForm.descripcion,
-        cashback_generado: cbGenerado, cuenta_id: selectedAccount.id
+        tipo: movForm.tipo, 
+        monto: monto, 
+        descripcion: movForm.descripcion,
+        categoria_id: movForm.categoria_id || null, // AÑADIDO: Vínculo a categoría
+        cashback_generado: cbGenerado, 
+        cuenta_id: selectedAccount.id
       }]);
       if (error) throw error;
 
@@ -174,7 +162,7 @@ export const FlowModule = () => {
       
       triggerHaptic('heavy');
       setShowMovForm(false);
-      setMovForm({ tipo: 'Egreso', monto: '', descripcion: '', porcentaje_cashback: '' });
+      setMovForm({ tipo: 'Egreso', monto: '', descripcion: '', porcentaje_cashback: '', categoria_id: '' });
       fetchMovimientos(selectedAccount.id);
       refetchCuentas();
       setSelectedAccount({ ...selectedAccount, saldo_actual: nuevoSaldo, cashback_acumulado: nuevoCashbackAcumulado });
@@ -227,9 +215,7 @@ export const FlowModule = () => {
 
       await supabase.from('nexus_cuentas').update({ saldo_actual: nuevoSaldo, cashback_acumulado: nuevoCashback }).eq('id', selectedAccount.id);
       
-      triggerHaptic('light');
-      fetchMovimientos(selectedAccount.id);
-      refetchCuentas();
+      triggerHaptic('light'); fetchMovimientos(selectedAccount.id); refetchCuentas();
       setSelectedAccount({ ...selectedAccount, saldo_actual: nuevoSaldo, cashback_acumulado: nuevoCashback });
     } catch (err) { alert(err.message); }
   };
@@ -240,11 +226,7 @@ export const FlowModule = () => {
     try {
       const { error } = await supabase.from('nexus_cuentas').delete().eq('id', selectedAccount.id);
       if (error) throw error;
-      
-      triggerHaptic('heavy');
-      setIsDeleting(false);
-      setSelectedAccount(null);
-      refetchCuentas();
+      triggerHaptic('heavy'); setIsDeleting(false); setSelectedAccount(null); refetchCuentas();
     } catch (err) { alert(`Error: ${err.message}`); } 
     finally { setIsSubmitting(false); }
   };
@@ -290,7 +272,7 @@ export const FlowModule = () => {
           </div>
 
           <div className="flex gap-2 p-1.5 bg-[#0A0A0A]/60 backdrop-blur-xl border border-white/5 rounded-2xl w-full overflow-x-auto hide-scrollbar">
-            {['Efectivo', 'Cuenta', 'Crédito', 'Débito'].map(tab => (
+            {['Efectivo', 'Cuentas', 'Crédito', 'Débito'].map(tab => (
               <button 
                 key={tab} 
                 onClick={() => { triggerHaptic('light'); setActiveTab(tab); }} 
@@ -322,7 +304,7 @@ export const FlowModule = () => {
                     </div>
                     <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl">
                       {c.tipo === 'Efectivo' ? <Banknote size={20} className="text-white" /> : 
-                       c.tipo === 'Cuenta' ? <PiggyBank size={20} className="text-white" /> : 
+                       c.tipo === 'Cuentas' ? <PiggyBank size={20} className="text-white" /> : 
                        <CreditCard size={20} className="text-white" />}
                     </div>
                   </div>
@@ -334,7 +316,7 @@ export const FlowModule = () => {
                         ${Number(c.saldo_actual).toLocaleString(undefined, {minimumFractionDigits: 2})}
                       </p>
                       <p className="text-[10px] font-mono text-white/50 tracking-widest bg-black/40 px-3 py-1.5 rounded-lg border border-white/10">
-                        {c.tipo === 'Efectivo' ? 'CASH' : (c.tipo === 'Cuenta' ? c.ultimos_digitos : (c.ultimos_digitos ? `•••• ${c.ultimos_digitos}` : ''))}
+                        {c.tipo === 'Efectivo' ? 'CASH' : (c.tipo === 'Cuentas' ? c.ultimos_digitos : (c.ultimos_digitos ? `•••• ${c.ultimos_digitos}` : ''))}
                       </p>
                     </div>
                   </div>
@@ -367,7 +349,7 @@ export const FlowModule = () => {
             <div className="z-10">
               <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter drop-shadow-xl">{selectedAccount.nombre_cuenta}</h2>
               <p className="text-[10px] font-mono text-white/60 tracking-[0.3em] uppercase mt-2">
-                {selectedAccount.banco} {selectedAccount.tipo === 'Efectivo' ? '' : (selectedAccount.tipo === 'Cuenta' ? selectedAccount.ultimos_digitos : (selectedAccount.ultimos_digitos ? `• •••• ${selectedAccount.ultimos_digitos}` : ''))}
+                {selectedAccount.banco} {selectedAccount.tipo === 'Efectivo' ? '' : (selectedAccount.tipo === 'Cuentas' ? selectedAccount.ultimos_digitos : (selectedAccount.ultimos_digitos ? `• •••• ${selectedAccount.ultimos_digitos}` : ''))}
               </p>
             </div>
             <div className="z-10">
@@ -379,25 +361,15 @@ export const FlowModule = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {selectedAccount.tipo === 'Cuenta' && (
+            {selectedAccount.tipo === 'Cuentas' && (
               <StatsCard title="Rendimiento Anual" amount={selectedAccount.tasa_rendimiento ? `${selectedAccount.tasa_rendimiento}%` : '--'} icon={<TrendingUp size={16}/>} color="text-emerald-400" />
             )}
             {(selectedAccount.tipo === 'Crédito' || selectedAccount.tipo === 'Débito') && (
-              <StatsCard 
-                title="Alcancía Cashback" 
-                amount={<span className={privacyClass}>${Number(selectedAccount.cashback_acumulado || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>} 
-                icon={<Sparkles size={16}/>} 
-                color="text-purple-400" 
-              />
+              <StatsCard title="Alcancía Cashback" amount={<span className={privacyClass}>${Number(selectedAccount.cashback_acumulado || 0).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>} icon={<Sparkles size={16}/>} color="text-purple-400" />
             )}
             {selectedAccount.tipo === 'Crédito' && (
               <>
-                <StatsCard 
-                  title="Límite Restante" 
-                  amount={<span className={privacyClass}>${(selectedAccount.limite_credito - selectedAccount.saldo_actual).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>} 
-                  icon={<Wallet size={16}/>} 
-                  color="text-cyan-400" 
-                />
+                <StatsCard title="Límite Restante" amount={<span className={privacyClass}>${(selectedAccount.limite_credito - selectedAccount.saldo_actual).toLocaleString(undefined, {minimumFractionDigits: 2})}</span>} icon={<Wallet size={16}/>} color="text-cyan-400" />
                 <StatsCard title="Corte / Pago" amount={selectedAccount.fecha_corte ? `${selectedAccount.fecha_corte} / ${selectedAccount.fecha_pago}` : '--'} icon={<Calendar size={16}/>} color="text-red-400" />
               </>
             )}
@@ -430,9 +402,13 @@ export const FlowModule = () => {
                             {isPos ? <ArrowDownRight size={18}/> : <ArrowUpRight size={18}/>}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-white/90 tracking-tight">{m.descripcion}</p>
-                            <div className="flex gap-3 mt-1">
+                            {/* AÑADIDO: Muestra la Categoría Dinámica conectada */}
+                            <p className="text-sm font-bold text-white/90 tracking-tight flex items-center gap-2">
+                                {m.descripcion}
+                            </p>
+                            <div className="flex gap-3 mt-1 items-center">
                               <p className="text-[9px] font-mono text-white/40 uppercase tracking-widest">{new Date(m.fecha).toLocaleDateString(undefined, {day:'2-digit', month:'short'})}</p>
+                              {m.nexus_categories?.nombre && <span className="bg-white/10 text-white/60 px-2 py-0.5 rounded-md text-[8px] font-bold uppercase tracking-widest">{m.nexus_categories.nombre}</span>}
                               {Number(m.cashback_generado) > 0 && <p className={`text-[9px] font-mono text-purple-400 uppercase tracking-widest font-bold ${privacyClass}`}>+{Number(m.cashback_generado).toFixed(2)} CB</p>}
                             </div>
                           </div>
@@ -497,9 +473,7 @@ export const FlowModule = () => {
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
             <button onClick={closeAccountForm} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block active:scale-90"><X size={20} /></button>
             
-            <h2 className="text-3xl font-black tracking-tighter text-white mb-2">
-              {accountForm.id ? 'Editar Activo' : 'Nuevo Activo Financiero'}
-            </h2>
+            <h2 className="text-3xl font-black tracking-tighter text-white mb-2">{accountForm.id ? 'Editar Activo' : 'Nuevo Activo Financiero'}</h2>
             <p className="text-white/40 text-[10px] uppercase tracking-widest font-bold mb-8 border-b border-white/5 pb-6">Configuración del Tarjetero Digital</p>
             
             <form onSubmit={handleSaveAccount} className="space-y-6">
@@ -510,15 +484,10 @@ export const FlowModule = () => {
                   <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Tipo de Producto</label>
                   <select value={accountForm.tipo} onChange={e => {
                       const val = e.target.value;
-                      setAccountForm({
-                        ...accountForm, 
-                        tipo: val, 
-                        banco: val === 'Efectivo' ? 'Efectivo' : accountForm.banco,
-                        color_tarjeta: val === 'Efectivo' ? '#10b981' : accountForm.color_tarjeta
-                      });
+                      setAccountForm({ ...accountForm, tipo: val, banco: val === 'Efectivo' ? 'Efectivo' : accountForm.banco, color_tarjeta: val === 'Efectivo' ? '#10b981' : accountForm.color_tarjeta });
                   }} className="w-full bg-white/5 border border-white/5 text-white font-medium p-4 rounded-2xl focus:border-white/30 outline-none appearance-none transition-all">
                     <option className="bg-black" value="Efectivo">Efectivo (Cash)</option>
-                    <option className="bg-black" value="Cuenta">Cuenta</option>
+                    <option className="bg-black" value="Cuentas">Cuenta</option>
                     <option className="bg-black" value="Crédito">Tarjeta de crédito</option>
                     <option className="bg-black" value="Débito">Tarjeta de débito</option>
                   </select>
@@ -533,13 +502,7 @@ export const FlowModule = () => {
               {accountForm.tipo !== 'Efectivo' && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
                   <Input label="Institución / Banco" placeholder="Ej. Banco Agrícola" value={accountForm.banco} onChange={e => setAccountForm({...accountForm, banco: e.target.value})} required />
-                  <Input 
-                    label={accountForm.tipo === 'Cuenta' ? 'Nº de Cuenta Completo' : 'Últimos 4 Dígitos'} 
-                    placeholder={accountForm.tipo === 'Cuenta' ? 'Ej. 0000012345678' : '4567'} 
-                    maxLength={accountForm.tipo === 'Cuenta' ? '30' : '4'} 
-                    value={accountForm.ultimos_digitos} 
-                    onChange={e => setAccountForm({...accountForm, ultimos_digitos: e.target.value})} 
-                  />
+                  <Input label={accountForm.tipo === 'Cuentas' ? 'Nº de Cuenta Completo' : 'Últimos 4 Dígitos'} placeholder={accountForm.tipo === 'Cuentas' ? 'Ej. 0000012345678' : '4567'} maxLength={accountForm.tipo === 'Cuentas' ? '30' : '4'} value={accountForm.ultimos_digitos} onChange={e => setAccountForm({...accountForm, ultimos_digitos: e.target.value})} />
                 </div>
               )}
 
@@ -556,7 +519,7 @@ export const FlowModule = () => {
                   </div>
                 )}
                 
-                {accountForm.tipo === 'Cuenta' && (
+                {accountForm.tipo === 'Cuentas' && (
                   <div className="space-y-1.5">
                     <label className="text-[9px] text-emerald-400 font-black uppercase tracking-widest ml-1">Rendimiento Anual (TEA %)</label>
                     <input type="number" step="0.1" value={accountForm.tasa_rendimiento} onChange={e => setAccountForm({...accountForm, tasa_rendimiento: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all placeholder:text-white/10" placeholder="3.5"/>
@@ -586,11 +549,11 @@ export const FlowModule = () => {
         </div>
       )}
 
-      {/* MODAL: REGISTRO DE FLUJO (TRANSACCIONES) */}
+      {/* MODAL: REGISTRO DE FLUJO (CON VÍNCULO A CATEGORÍAS) */}
       {showMovForm && (
         <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 pt-20 md:p-4 overflow-hidden">
           <div className="absolute inset-0" onClick={() => { triggerHaptic('light'); setShowMovForm(false); }}></div>
-          <div className="w-full max-w-md bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-slide-up-sheet max-h-[75vh] overflow-y-auto z-10 pb-16 md:pb-10 hide-scrollbar">
+          <div className="w-full max-w-md bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-slide-up-sheet max-h-[85vh] overflow-y-auto z-10 pb-16 md:pb-10 hide-scrollbar">
             
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
             <button onClick={() => { triggerHaptic('light'); setShowMovForm(false); }} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block active:scale-90"><X size={20} /></button>
@@ -600,10 +563,10 @@ export const FlowModule = () => {
             <form onSubmit={handleSaveMovement} className="space-y-6">
               
               <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/5">
-                <button type="button" onClick={() => { triggerHaptic('light'); setMovForm({...movForm, tipo: 'Egreso'}); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${movForm.tipo === 'Egreso' ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'text-white/40'}`}>
+                <button type="button" onClick={() => { triggerHaptic('light'); setMovForm({...movForm, tipo: 'Egreso', categoria_id: ''}); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${movForm.tipo === 'Egreso' ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'text-white/40'}`}>
                   Gasto / Salida
                 </button>
-                <button type="button" onClick={() => { triggerHaptic('light'); setMovForm({...movForm, tipo: 'Ingreso'}); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${movForm.tipo === 'Ingreso' ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'text-white/40'}`}>
+                <button type="button" onClick={() => { triggerHaptic('light'); setMovForm({...movForm, tipo: 'Ingreso', categoria_id: ''}); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${movForm.tipo === 'Ingreso' ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'text-white/40'}`}>
                   Ingreso / Entrada
                 </button>
               </div>
@@ -616,7 +579,16 @@ export const FlowModule = () => {
                 </div>
               </div>
 
-              <Input label="Concepto / Descripción" placeholder="Ej. Pago Combustible, Compra Super..." value={movForm.descripcion} onChange={e => setMovForm({...movForm, descripcion: e.target.value})} required />
+              {/* AÑADIDO: Selector de Categorías Dinámicas */}
+              <div className="space-y-1.5 pt-2">
+                  <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1 flex items-center gap-2"><Tags size={12}/> Categoría</label>
+                  <select required value={movForm.categoria_id} onChange={e => setMovForm({...movForm, categoria_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white font-bold p-4 rounded-2xl outline-none appearance-none focus:border-white/30 transition-all">
+                      <option value="" disabled className="bg-black text-white/40">Selecciona el rubro...</option>
+                      {categoriasFiltradas?.map(cat => <option className="bg-black" key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+                  </select>
+              </div>
+
+              <Input label="Nota Opcional" placeholder="Detalles de la compra..." value={movForm.descripcion} onChange={e => setMovForm({...movForm, descripcion: e.target.value})} />
               
               {(selectedAccount.tipo === 'Crédito' || selectedAccount.tipo === 'Débito') && movForm.tipo === 'Egreso' && (
                 <div className="p-5 border border-purple-500/30 bg-purple-500/10 rounded-4xl animate-in fade-in slide-in-from-top-4 duration-300">
