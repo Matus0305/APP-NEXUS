@@ -320,67 +320,76 @@ export const FleetManagement = () => {
         </div>
       )}
 
-      {/* FORMULARIO NEXUS (BOTTOM SHEET) */}
+      {/* FORMULARIO NEXUS (BOTTOM SHEET / MODAL) */}
       {formMode && (
-        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 pt-20 md:p-4 overflow-hidden">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-6 overflow-hidden">
           <div className="absolute inset-0" onClick={() => setFormMode(null)}></div>
-          <div className="w-full max-w-3xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-in slide-in-from-bottom-full duration-500 max-h-[85vh] overflow-y-auto z-10 pb-32 md:pb-10 hide-scrollbar">
-            <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-8 md:hidden"></div>
-            <button onClick={() => setFormMode(null)} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block"><X size={20}/></button>
-            <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white mb-2">{formMode === 'edit' ? 'Actualizar Activo' : 'Nuevo Vehículo'}</h2>
-            <p className="text-white/40 text-[10px] uppercase tracking-widest font-bold mb-8">Configuración técnica e inteligencia financiera</p>
+          
+          {/* Contenedor Principal Ajustado */}
+          <div className="w-full max-w-3xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-in slide-in-from-bottom-full duration-500 flex flex-col max-h-[90vh] z-10">
             
-            <form onSubmit={handleSaveVehicle} className="space-y-6">
-              <div className="bg-black/40 p-5 rounded-3xl border border-white/5 space-y-4">
-                <div className="flex items-center gap-2"><ImageIcon size={14} className="text-white/60" /><h4 className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-black">Estética Personalizada</h4></div>
-                <Input label="URL de Imagen del Vehículo" placeholder="Pega el enlace de la foto aquí..." value={formData.imagen_url} onChange={e => setFormData({...formData, imagen_url: e.target.value})} />
-              </div>
+            {/* Cabecera Fija (No hace scroll) */}
+            <div className="p-6 md:p-10 pb-4 md:pb-6 shrink-0 relative border-b border-white/5">
+              <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
+              <button onClick={() => setFormMode(null)} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block transition-all hover:bg-white/10"><X size={20}/></button>
+              <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white mb-2">{formMode === 'edit' ? 'Actualizar Activo' : 'Nuevo Vehículo'}</h2>
+              <p className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Configuración técnica e inteligencia financiera</p>
+            </div>
 
-              <div className="space-y-4 pt-4">
-                <div className="flex items-center gap-2 border-b border-white/5 pb-2"><Car size={14} className="text-white/40" /><h4 className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-black">Identidad y Finanzas</h4></div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input label="Marca" placeholder="Ej. Nissan" value={formData.marca} onChange={e => setFormData({...formData, marca: e.target.value})} required />
-                  <Input label="Modelo" placeholder="Ej. Sentra" value={formData.modelo} onChange={e => setFormData({...formData, modelo: e.target.value})} required />
-                  <Input label="Año" type="number" value={formData.año} onChange={e => setFormData({...formData, año: e.target.value})} required />
+            {/* Área del Formulario (CON SCROLL INDEPENDIENTE) */}
+            <div className="p-6 md:p-10 pt-4 overflow-y-auto flex-1 hide-scrollbar">
+              <form onSubmit={handleSaveVehicle} className="space-y-6">
+                <div className="bg-black/40 p-5 rounded-3xl border border-white/5 space-y-4">
+                  <div className="flex items-center gap-2"><ImageIcon size={14} className="text-white/60" /><h4 className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-black">Estética Personalizada</h4></div>
+                  <Input label="URL de Imagen del Vehículo" placeholder="Pega el enlace de la foto aquí..." value={formData.imagen_url} onChange={e => setFormData({...formData, imagen_url: e.target.value})} />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input label="Precio Compra ($)" type="number" value={formData.precio_compra} onChange={e => setFormData({...formData, precio_compra: e.target.value})} required />
-                  <Input label="Rescate Venta ($)" type="number" value={formData.valor_venta} onChange={e => setFormData({...formData, valor_venta: e.target.value})} required />
-                </div>
-              </div>
 
-              <div className="space-y-4 pt-4">
-                <div className="flex items-center gap-2 border-b border-white/5 pb-2"><Settings2 size={14} className="text-white/40" /><h4 className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-black">Mecánica y Operación</h4></div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Input label="Odómetro (Millas)" type="number" value={formData.millaje_actual} onChange={e => setFormData({...formData, millaje_actual: e.target.value})} required />
-                  <Input label="Vida Útil (Millas)" type="number" value={formData.millas_vida_util} onChange={e => setFormData({...formData, millas_vida_util: e.target.value})} required />
-                  <Input label="Reserva Mensual ($)" type="number" value={formData.meta_mantenimiento} onChange={e => setFormData({...formData, meta_mantenimiento: e.target.value})} required />
+                <div className="space-y-4 pt-4">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2"><Car size={14} className="text-white/40" /><h4 className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-black">Identidad y Finanzas</h4></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Input label="Marca" placeholder="Ej. Nissan" value={formData.marca} onChange={e => setFormData({...formData, marca: e.target.value})} required />
+                    <Input label="Modelo" placeholder="Ej. Sentra" value={formData.modelo} onChange={e => setFormData({...formData, modelo: e.target.value})} required />
+                    <Input label="Año" type="number" value={formData.año} onChange={e => setFormData({...formData, año: e.target.value})} required />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input label="Precio Compra ($)" type="number" value={formData.precio_compra} onChange={e => setFormData({...formData, precio_compra: e.target.value})} required />
+                    <Input label="Rescate Venta ($)" type="number" value={formData.valor_venta} onChange={e => setFormData({...formData, valor_venta: e.target.value})} required />
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-black/40 p-5 rounded-3xl border border-white/5 mt-2">
-                  <Input label="Últ. Aceite Motor" type="number" value={formData.ultimo_cambio_aceite_motor} onChange={e => setFormData({...formData, ultimo_cambio_aceite_motor: e.target.value})} />
-                  <Input label="Int. Motor" type="number" value={formData.intervalo_aceite_motor} onChange={e => setFormData({...formData, intervalo_aceite_motor: e.target.value})} />
-                  <Input label="Últ. Aceite Caja" type="number" value={formData.ultimo_cambio_aceite_caja} onChange={e => setFormData({...formData, ultimo_cambio_aceite_caja: e.target.value})} />
-                  <Input label="Int. Caja" type="number" value={formData.intervalo_aceite_caja} onChange={e => setFormData({...formData, intervalo_aceite_caja: e.target.value})} />
-                </div>
-              </div>
 
-              <div className="space-y-4 pt-4">
-                <div className="flex items-center gap-2 border-b border-white/5 pb-2"><Shield size={14} className="text-white/40" /><h4 className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-black">Documentación Legal</h4></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Input label="Tarjeta Circulación" type="date" value={formData.vencimiento_tarjeta_circulacion} onChange={e => setFormData({...formData, vencimiento_tarjeta_circulacion: e.target.value})} style={{ colorScheme: 'dark' }} />
-                  <Input label="Seguro" type="date" value={formData.vencimiento_seguro} onChange={e => setFormData({...formData, vencimiento_seguro: e.target.value})} style={{ colorScheme: 'dark' }} />
+                <div className="space-y-4 pt-4">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2"><Settings2 size={14} className="text-white/40" /><h4 className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-black">Mecánica y Operación</h4></div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Input label="Odómetro (Millas)" type="number" value={formData.millaje_actual} onChange={e => setFormData({...formData, millaje_actual: e.target.value})} required />
+                    <Input label="Vida Útil (Millas)" type="number" value={formData.millas_vida_util} onChange={e => setFormData({...formData, millas_vida_util: e.target.value})} required />
+                    <Input label="Reserva Mensual ($)" type="number" value={formData.meta_mantenimiento} onChange={e => setFormData({...formData, meta_mantenimiento: e.target.value})} required />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 bg-black/40 p-5 rounded-3xl border border-white/5 mt-2">
+                    <Input label="Últ. Aceite Motor" type="number" value={formData.ultimo_cambio_aceite_motor} onChange={e => setFormData({...formData, ultimo_cambio_aceite_motor: e.target.value})} />
+                    <Input label="Int. Motor" type="number" value={formData.intervalo_aceite_motor} onChange={e => setFormData({...formData, intervalo_aceite_motor: e.target.value})} />
+                    <Input label="Últ. Aceite Caja" type="number" value={formData.ultimo_cambio_aceite_caja} onChange={e => setFormData({...formData, ultimo_cambio_aceite_caja: e.target.value})} />
+                    <Input label="Int. Caja" type="number" value={formData.intervalo_aceite_caja} onChange={e => setFormData({...formData, intervalo_aceite_caja: e.target.value})} />
+                  </div>
                 </div>
-              </div>
 
-              <div className="pt-8 flex justify-between gap-4">
-                {formMode === 'edit' && (
-                  <button type="button" onClick={() => { triggerHaptic('heavy'); setIsDeleting(true); }} className="px-6 py-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white font-black uppercase tracking-widest text-[11px] rounded-2xl border border-red-500/20 transition-all active:scale-95">Eliminar</button>
-                )}
-                <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-white text-black hover:bg-neutral-200 font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all active:scale-95 disabled:opacity-50">
-                  {isSubmitting ? 'Procesando...' : 'Guardar y Sincronizar'}
-                </button>
-              </div>
-            </form>
+                <div className="space-y-4 pt-4">
+                  <div className="flex items-center gap-2 border-b border-white/5 pb-2"><Shield size={14} className="text-white/40" /><h4 className="text-[10px] uppercase tracking-[0.2em] text-white/60 font-black">Documentación Legal</h4></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <Input label="Tarjeta Circulación" type="date" value={formData.vencimiento_tarjeta_circulacion} onChange={e => setFormData({...formData, vencimiento_tarjeta_circulacion: e.target.value})} style={{ colorScheme: 'dark' }} />
+                    <Input label="Seguro" type="date" value={formData.vencimiento_seguro} onChange={e => setFormData({...formData, vencimiento_seguro: e.target.value})} style={{ colorScheme: 'dark' }} />
+                  </div>
+                </div>
+
+                <div className="pt-6 pb-6 flex justify-between gap-4">
+                  {formMode === 'edit' && (
+                    <button type="button" onClick={() => { triggerHaptic('heavy'); setIsDeleting(true); }} className="px-6 py-4 bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white font-black uppercase tracking-widest text-[11px] rounded-2xl border border-red-500/20 transition-all active:scale-95">Eliminar</button>
+                  )}
+                  <button type="submit" disabled={isSubmitting} className="flex-1 py-4 bg-white text-black hover:bg-neutral-200 font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.2)] transition-all active:scale-95 disabled:opacity-50">
+                    {isSubmitting ? 'Procesando...' : 'Guardar y Sincronizar'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
