@@ -53,7 +53,7 @@ export const ShiftModule = () => {
   const [showExpenseModal, setShowExpenseModal] = useState(false);
   const [showFuelModal, setShowFuelModal] = useState(false);
 
-  const [txForm, setTxForm] = useState({ categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: '', porcentaje_cashback: '' });
+  const [txForm, setTxForm] = useState({ categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: '' });
   const [fuelForm, setFuelForm] = useState({ odometro_actual: '', galones: '', costo_total: '', cuenta_id: '' });
 
   const [showChecklist, setShowChecklist] = useState(false);
@@ -163,7 +163,7 @@ export const ShiftModule = () => {
 
       triggerHaptic('heavy');
       setShowIncomeModal(false); setShowExpenseModal(false);
-      setTxForm({ categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: '', porcentaje_cashback: '' });
+      setTxForm({ categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: '' });
       refetchJornadas(); refetchCuentas();
     } catch (err) { alert(err.message); } finally { setIsSubmitting(false); }
   };
@@ -207,7 +207,6 @@ export const ShiftModule = () => {
   const prepareCheckout = () => {
     triggerHaptic('light');
     const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-    // FIX: Math.max seguro para evitar que genere "NaN" si el vehículo no tiene millas
     const odoIni = parseFloat(activeShift?.odometro_inicial) || 0;
     const odoAct = parseFloat(activeVehicle?.millaje_actual) || 0;
     const maxOdo = Math.max(odoIni, odoAct);
@@ -262,21 +261,30 @@ export const ShiftModule = () => {
 
   if (loadV || loadC) return <div className="flex h-full items-center justify-center p-10 font-mono text-[10px] tracking-[0.3em] text-white/40 uppercase animate-pulse">Iniciando_Motor...</div>;
 
+  // CÁLCULOS RESTAURADOS
   const shiftToSummary = activeShift || jornadasActivas?.sort((a,b) => new Date(b.hora_fin) - new Date(a.hora_fin))[0];
   const vehicleSummary = vehiculos?.find(v => v.id === shiftToSummary?.vehiculo_id);
   const totalIngresos = Number(shiftToSummary?.ingresos_uber || 0) + Number(shiftToSummary?.ingresos_indrive || 0) + Number(shiftToSummary?.propinas || 0);
   const totalGastos = Number(shiftToSummary?.gastos_combustible || 0) + Number(shiftToSummary?.gastos_otros || 0);
   
-  let depreciacion = 0, millasRecorridas = 0, horasTrabajadas = 0, costoPorMilla = 0;
+  let depreciacion = 0, millasRecorridas = 0, horasTrabajadas = 0, costoPorMilla = 0, fondoMantenimiento = 0;
+  
   if (shiftToSummary && vehicleSummary) {
     millasRecorridas = (shiftToSummary.odometro_final || 0) - (shiftToSummary.odometro_inicial || 0);
     costoPorMilla = ((vehicleSummary.precio_compra || 0) - (vehicleSummary.valor_de_venta || 0)) / (vehicleSummary.millas_vida_util || 1);
     depreciacion = millasRecorridas * costoPorMilla;
+    fondoMantenimiento = ((vehicleSummary.meta_mantenimiento || 0) / 30);
+    
     const totalMs = new Date(shiftToSummary.hora_fin || new Date()) - new Date(shiftToSummary.hora_inicio);
-    horasTrabajadas = (totalMs - ((shiftToSummary.segundos_pausa || 0) * 1000)) / (1000 * 60 * 60);
+    const pauseMs = (shiftToSummary.segundos_pausa || 0) * 1000;
+    horasTrabajadas = (totalMs - pauseMs) / (1000 * 60 * 60);
   }
 
-  const utilidadNeta = totalIngresos - totalGastos - depreciacion - ((vehicleSummary?.meta_mantenimiento || 0) / 30);
+  const utilidadNeta = totalIngresos - totalGastos - depreciacion - fondoMantenimiento;
+  
+  // FIX: Restauramos la variable historialJornadas
+  const historialJornadas = jornadasActivas?.filter(j => j.estado === 'Finalizada').sort((a,b) => new Date(b.hora_fin) - new Date(a.hora_fin)) || [];
+
   const filteredCats = categoriasAll?.filter(c => c.tipo === (showIncomeModal ? 'Ingreso' : 'Egreso') && c.modulo === 'General') || [];
 
   return (
@@ -289,7 +297,7 @@ export const ShiftModule = () => {
             <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[80px] -mr-20 -mt-20 transition-all duration-700 group-hover:bg-white/10" />
             <div className="mb-8 md:mb-10 relative z-10">
               <h1 className="text-4xl md:text-5xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">Turno Operativo</h1>
-              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-2">Check-in Operador Nexus</p>
+              <p className="text-[10px] text-white/40 uppercase font-black tracking-widest mt-2">Check-in Johnnathan Matus</p>
             </div>
             <form onSubmit={handlePreStart} className="space-y-4 relative z-10">
               <div className="relative bg-black/40 border border-white/5 rounded-3xl p-4 md:p-5 hover:border-white/20 transition-all">
@@ -401,15 +409,15 @@ export const ShiftModule = () => {
               </button>
           ) : (
             <div className="flex gap-3 animate-in fade-in duration-300">
-              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: '', porcentaje_cashback: ''}); setShowIncomeModal(true); }} className="flex-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 py-6 rounded-4xl flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: ''}); setShowIncomeModal(true); }} className="flex-[2] bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 py-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                 <div className="w-12 h-12 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-xl"><Plus size={24} strokeWidth={3} /></div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Ingreso</span>
               </button>
-              <button onClick={() => { triggerHaptic('light'); setShowFuelModal(true); }} className="flex-1 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 py-6 rounded-4xl flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+              <button onClick={() => { triggerHaptic('light'); setShowFuelModal(true); }} className="flex-1 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 py-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
                 <div className="w-12 h-12 rounded-full bg-yellow-500 text-black flex items-center justify-center shadow-xl"><Fuel size={24} strokeWidth={3} /></div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500">Gaso</span>
               </button>
-              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Tarjeta', monto: '', cuenta_id: '', porcentaje_cashback: ''}); setShowExpenseModal(true); }} className="flex-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 py-6 rounded-4xl flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
+              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Tarjeta', monto: '', cuenta_id: ''}); setShowExpenseModal(true); }} className="flex-[2] bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 py-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
                 <div className="w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-xl"><Minus size={24} strokeWidth={3} /></div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-red-400">Gasto</span>
               </button>
@@ -477,7 +485,6 @@ export const ShiftModule = () => {
               <button type="submit" disabled={isSubmitting} className="w-full py-6 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-4xl active:scale-95 transition-all shadow-[0_10px_40px_rgba(255,255,255,0.2)] mt-8">
                 {isSubmitting ? 'Ubicando y Procesando...' : 'Generar Recibo'}
               </button>
-              {/* Botón cancelar explícito en móvil */}
               <button type="button" onClick={() => setViewState(2)} className="w-full mt-4 py-4 text-white/40 text-[10px] font-bold uppercase tracking-widest hover:text-white md:hidden">Cancelar Cierre</button>
             </form>
           </div>
@@ -555,7 +562,6 @@ export const ShiftModule = () => {
             >
                 {isSubmitting ? 'Buscando Satélites...' : 'Confirmar e Iniciar'}
             </button>
-            {/* Botón cancelar explícito en móvil */}
             <button onClick={() => setShowChecklist(false)} className="w-full mt-4 py-4 text-white/40 text-[10px] font-bold uppercase tracking-widest hover:text-white md:hidden">Cancelar</button>
           </div>
         </div>
@@ -598,7 +604,6 @@ export const ShiftModule = () => {
               <button type="submit" disabled={isSubmitting} className="w-full py-5 mt-6 bg-yellow-500 hover:bg-yellow-600 text-black font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-95 transition-all shadow-lg">
                 {isSubmitting ? 'Procesando...' : 'Confirmar Llenado'}
               </button>
-              {/* Botón cancelar explícito en móvil */}
               <button type="button" onClick={() => setShowFuelModal(false)} className="w-full mt-4 py-4 text-white/40 text-[10px] font-bold uppercase tracking-widest hover:text-white md:hidden">Cancelar</button>
             </form>
           </div>
@@ -649,7 +654,6 @@ export const ShiftModule = () => {
               <button type="submit" disabled={isSubmitting} className={`w-full py-5 mt-6 text-black font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-95 transition-all shadow-lg ${showIncomeModal ? 'bg-emerald-400 hover:bg-emerald-500' : 'bg-red-400 hover:bg-red-500'}`}>
                 {isSubmitting ? 'Procesando...' : 'Confirmar'}
               </button>
-              {/* Botón cancelar explícito en móvil */}
               <button type="button" onClick={() => { setShowIncomeModal(false); setShowExpenseModal(false); }} className="w-full mt-4 py-4 text-white/40 text-[10px] font-bold uppercase tracking-widest hover:text-white md:hidden">Cancelar</button>
             </form>
           </div>
