@@ -409,15 +409,15 @@ export const ShiftModule = () => {
               </button>
           ) : (
             <div className="flex gap-3 animate-in fade-in duration-300">
-              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: ''}); setShowIncomeModal(true); }} className="flex-[2] bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 py-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
+              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Efectivo', monto: '', cuenta_id: ''}); setShowIncomeModal(true); }} className="flex-2 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/20 py-6 rounded-4xl flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(16,185,129,0.1)]">
                 <div className="w-12 h-12 rounded-full bg-emerald-500 text-black flex items-center justify-center shadow-xl"><Plus size={24} strokeWidth={3} /></div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Ingreso</span>
               </button>
-              <button onClick={() => { triggerHaptic('light'); setShowFuelModal(true); }} className="flex-1 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 py-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
+              <button onClick={() => { triggerHaptic('light'); setShowFuelModal(true); }} className="flex-1 bg-yellow-500/10 hover:bg-yellow-500/20 border border-yellow-500/20 py-6 rounded-4xl flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
                 <div className="w-12 h-12 rounded-full bg-yellow-500 text-black flex items-center justify-center shadow-xl"><Fuel size={24} strokeWidth={3} /></div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-yellow-500">Gaso</span>
               </button>
-              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Tarjeta', monto: '', cuenta_id: ''}); setShowExpenseModal(true); }} className="flex-[2] bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 py-6 rounded-[2rem] flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
+              <button onClick={() => { triggerHaptic('light'); setTxForm({categoria_id: '', metodo: 'Tarjeta', monto: '', cuenta_id: ''}); setShowExpenseModal(true); }} className="flex-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 py-6 rounded-4xl flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-[0_0_30px_rgba(239,68,68,0.1)]">
                 <div className="w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-xl"><Minus size={24} strokeWidth={3} /></div>
                 <span className="text-[10px] font-black uppercase tracking-widest text-red-400">Gasto</span>
               </button>
