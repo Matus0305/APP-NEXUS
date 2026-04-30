@@ -5,7 +5,7 @@ import { usePrivacy } from '../../hooks/usePrivacy';
 import { triggerHaptic } from '../../utils/haptics';
 import { 
   Search, Plus, MapPin, Tag, CheckCircle2, X, Trash2, Edit2, Wallet, 
-  CreditCard, Building, TrendingUp, PackageCheck, Undo2, Smartphone, Banknote, AlertTriangle
+  CreditCard, Building, TrendingUp, PackageCheck, Undo2, Smartphone, Banknote, AlertTriangle, ArrowLeft
 } from 'lucide-react';
 
 export const LogisticsModule = () => {

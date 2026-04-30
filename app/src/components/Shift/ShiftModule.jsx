@@ -4,7 +4,7 @@ import { useSupabaseQuery } from '../../hooks/useSupabase';
 import { usePrivacy } from '../../hooks/usePrivacy';
 import { triggerHaptic } from '../../utils/haptics';
 import { 
-  Play, Square, Plus, Minus, Clock, MapPin, Car, DollarSign, Wallet, TrendingDown, Wrench, CheckCircle2, X, Calendar, History, Trash2, ShieldCheck, AlertTriangle, Pause, Navigation, Fuel, Sparkles
+  Play, Square, Plus, Minus, Clock, MapPin, Car, DollarSign, Wallet, TrendingDown, Wrench, CheckCircle2, X, Calendar, History, Trash2, ShieldCheck, AlertTriangle, Pause, Navigation, Fuel, Sparkles, ArrowLeft
 } from 'lucide-react';
 
 const LiveTimer = ({ startTime, isPaused, pauseStartTime, accumulatedPauseSeconds }) => {
