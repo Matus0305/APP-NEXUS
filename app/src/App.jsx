@@ -34,12 +34,12 @@ const MainContent = () => {
         <div key={location.pathname} className="max-w-5xl mx-auto h-full animate-fade-in-up">
           <Routes>
             <Route path="/" element={<DummyModule title="DASHBOARD_ACTIVO" />} />
-            <Route path="/Shifts" element={<ShiftModule />} />
-            <Route path="/fleet" element={<FleetManagement />} />
-            <Route path="/flow" element={<FlowModule />} />
-            <Route path="/logistics" element={<LogisticsModule />} />
-            <Route path="/patrimony" element={<PatrimonyModule />} />
-            <Route path="/settings" element={<SettingsModule />} />
+            <Route path="/Shift" element={<ShiftModule />} />
+            <Route path="/Fleet" element={<FleetManagement />} />
+            <Route path="/Flow" element={<FlowModule />} />
+            <Route path="/Logistics" element={<LogisticsModule />} />
+            <Route path="/Patrimony" element={<PatrimonyModule />} />
+            <Route path="/Settings" element={<SettingsModule />} />
           </Routes>
         </div>
       </main>

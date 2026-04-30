@@ -82,7 +82,7 @@ export const FlowModule = () => {
   const filtradas = cuentas?.filter(c => c.tipo === activeTab) || [];
 
   // Categorías filtradas por tipo de transacción para el selector
-  const categoriasFiltradas = categoriasAll?.filter(c => c.tipo === movForm.tipo) || [];
+  const categoriasFiltradas = categoriasAll?.filter(c => c.tipo === movForm.tipo && c.modulo === 'General') || [];
 
   // 6. HANDLERS
   const handleEditClick = () => {

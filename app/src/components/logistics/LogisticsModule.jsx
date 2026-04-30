@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 
 export const LogisticsModule = () => {
-  // 1. DATA FETCHING (Logística + Cuentas + Categorías Dinámicas)
   const { data: envios, loading: loadingLogistica, refetch } = useSupabaseQuery('logistica');
   const { data: cuentasBilletera, loading: loadingCuentas } = useSupabaseQuery('nexus_cuentas'); 
   const { data: categoriasAll } = useSupabaseQuery('nexus_categories');
@@ -16,7 +15,6 @@ export const LogisticsModule = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Estados del Formulario (AÑADIDO categoria_id)
   const initialFormState = { 
     producto: '', precio_producto: '', costo_envio: '', 
     direccion: '', categoria_id: '', metodo_pago: '', 
@@ -26,11 +24,9 @@ export const LogisticsModule = () => {
   const [formMode, setFormMode] = useState(null); 
   const [selectedRecord, setSelectedRecord] = useState(null);
 
-  // Estados para el Flujo de Cobro Diferido
   const [collectingRecord, setCollectingRecord] = useState(null);
   const [destinoFondosId, setDestinoFondosId] = useState('');
 
-  // Auto-seleccionar la primera cuenta
   useEffect(() => {
     if ((formMode || collectingRecord) && cuentasBilletera?.length > 0) {
        if (!formData.destino_fondos_id) setFormData(prev => ({...prev, destino_fondos_id: cuentasBilletera[0].id}));
@@ -40,7 +36,6 @@ export const LogisticsModule = () => {
 
   if (loadingLogistica || loadingCuentas) return <div className="flex items-center justify-center h-full p-10 font-mono text-[10px] tracking-[0.3em] text-white/40 uppercase animate-pulse">Sincronizando_Ecosistema...</div>;
 
-  // CÁLCULO DE MÉTRICAS (Solo cobrado)
   const metricas = envios?.filter(i => i.estado === 'cobrado').reduce((acc, curr) => {
     acc.ventasNovia += (parseFloat(curr.precio_producto) || 0);
     acc.tusEnvios += (parseFloat(curr.costo_envio) || 0);
@@ -54,12 +49,11 @@ export const LogisticsModule = () => {
            catName.toLowerCase().includes(searchTerm.toLowerCase());
   }).sort((a,b) => new Date(b.created_at) - new Date(a.created_at)) || [];
 
-  // ⚡ GUARDADO INTELIGENTE
+  // AÑADIDO: Filtro de Categorías Solo para Logística
+  const categoriasLogistica = categoriasAll?.filter(c => c.modulo === 'Logistica') || [];
+
   const handleSave = async (e) => {
-    e.preventDefault();
-    triggerHaptic('medium');
-    setIsSubmitting(true);
-    
+    e.preventDefault(); triggerHaptic('medium'); setIsSubmitting(true);
     try {
       let cuentaDestino = null;
       if (formData.estado === 'cobrado') {
@@ -68,14 +62,10 @@ export const LogisticsModule = () => {
       }
 
       const payload = {
-        producto: formData.producto.trim(),
-        precio_producto: parseFloat(formData.precio_producto) || 0,
-        costo_envio: parseFloat(formData.costo_envio) || 0,
-        direccion: formData.direccion.trim(),
-        categoria_id: formData.categoria_id || null, // Vínculo Dinámico
-        metodo_pago: formData.metodo_pago.trim(),
-        estado: formData.estado,
-        destino_fondos: cuentaDestino ? cuentaDestino.nombre_cuenta : (selectedRecord ? selectedRecord.destino_fondos : null)
+        producto: formData.producto.trim(), precio_producto: parseFloat(formData.precio_producto) || 0,
+        costo_envio: parseFloat(formData.costo_envio) || 0, direccion: formData.direccion.trim(),
+        categoria_id: formData.categoria_id || null, metodo_pago: formData.metodo_pago.trim(),
+        estado: formData.estado, destino_fondos: cuentaDestino ? cuentaDestino.nombre_cuenta : (selectedRecord ? selectedRecord.destino_fondos : null)
       };
 
       if (formMode === 'add') {
@@ -89,35 +79,23 @@ export const LogisticsModule = () => {
       if (formData.estado === 'cobrado' && (!selectedRecord || selectedRecord.estado !== 'cobrado')) {
         const montoTotal = payload.precio_producto + payload.costo_envio;
         const { error: movError } = await supabase.from('nexus_movimientos').insert([{
-          cuenta_id: formData.destino_fondos_id,
-          tipo: 'Ingreso',
-          monto: montoTotal,
-          categoria_id: formData.categoria_id || null,
-          descripcion: `Cobro Inmediato: ${payload.producto} (Logística)`
+          cuenta_id: formData.destino_fondos_id, tipo: 'Ingreso', monto: montoTotal,
+          categoria_id: formData.categoria_id || null, descripcion: `Cobro Inmediato: ${payload.producto} (Logística)`
         }]);
         if (movError) throw movError;
 
         let nuevoSaldo = Number(cuentaDestino.saldo_actual);
         nuevoSaldo = cuentaDestino.tipo === 'Crédito' ? nuevoSaldo - montoTotal : nuevoSaldo + montoTotal;
-        const { error: saldoError } = await supabase.from('nexus_cuentas').update({ saldo_actual: nuevoSaldo }).eq('id', formData.destino_fondos_id);
-        if (saldoError) throw saldoError;
+        await supabase.from('nexus_cuentas').update({ saldo_actual: nuevoSaldo }).eq('id', formData.destino_fondos_id);
       }
 
-      triggerHaptic('heavy');
-      setFormMode(null);
-      setFormData(initialFormState);
-      refetch();
-    } catch (err) { triggerHaptic('heavy'); alert(`Error: ${err.message}`); } 
-    finally { setIsSubmitting(false); }
+      triggerHaptic('heavy'); setFormMode(null); setFormData(initialFormState); refetch();
+    } catch (err) { triggerHaptic('heavy'); alert(`Error: ${err.message}`); } finally { setIsSubmitting(false); }
   };
 
-  // ⚡ COBRO DIFERIDO
   const confirmCollect = async (e) => {
-    e.preventDefault();
-    triggerHaptic('medium');
-    if (!destinoFondosId) return alert("Selecciona una billetera de destino.");
+    e.preventDefault(); triggerHaptic('medium'); if (!destinoFondosId) return alert("Selecciona una billetera de destino.");
     setIsSubmitting(true);
-    
     try {
       const cuentaDestino = cuentasBilletera.find(c => c.id === destinoFondosId);
       if (!cuentaDestino) throw new Error("Billetera no encontrada");
@@ -125,36 +103,30 @@ export const LogisticsModule = () => {
       const montoTotalCobrado = (parseFloat(collectingRecord.precio_producto) || 0) + (parseFloat(collectingRecord.costo_envio) || 0);
 
       await supabase.from('logistica').update({ estado: 'cobrado', destino_fondos: cuentaDestino.nombre_cuenta }).eq('id', collectingRecord.id);
-
       await supabase.from('nexus_movimientos').insert([{
         cuenta_id: destinoFondosId, tipo: 'Ingreso', monto: montoTotalCobrado,
-        categoria_id: collectingRecord.categoria_id || null,
-        descripcion: `Cobro Envío: ${collectingRecord.producto} (Logística)`
+        categoria_id: collectingRecord.categoria_id || null, descripcion: `Cobro Envío: ${collectingRecord.producto} (Logística)`
       }]);
 
       let nuevoSaldo = Number(cuentaDestino.saldo_actual);
       nuevoSaldo = cuentaDestino.tipo === 'Crédito' ? nuevoSaldo - montoTotalCobrado : nuevoSaldo + montoTotalCobrado;
       await supabase.from('nexus_cuentas').update({ saldo_actual: nuevoSaldo }).eq('id', destinoFondosId);
 
-      triggerHaptic('heavy');
-      setCollectingRecord(null); setDestinoFondosId(''); refetch();
-    } catch (err) { alert(`Error: ${err.message}`); } 
-    finally { setIsSubmitting(false); }
+      triggerHaptic('heavy'); setCollectingRecord(null); setDestinoFondosId(''); refetch();
+    } catch (err) { alert(`Error: ${err.message}`); } finally { setIsSubmitting(false); }
   };
 
   const revertCollect = async (item) => {
     triggerHaptic('heavy');
     if(!window.confirm(`¿Seguro que deseas revertir este cobro?`)) return;
     setIsSubmitting(true);
-    
     try {
       const montoTotal = (parseFloat(item.precio_producto) || 0) + (parseFloat(item.costo_envio) || 0);
       const cuentaDestino = cuentasBilletera?.find(c => c.nombre_cuenta === item.destino_fondos);
 
       if (cuentaDestino) {
         const descripcionesPosibles = [`Cobro Inmediato: ${item.producto} (Logística)`, `Cobro Envío: ${item.producto} (Logística)`];
-        const { data: movs } = await supabase.from('nexus_movimientos').select('*')
-          .eq('cuenta_id', cuentaDestino.id).eq('monto', montoTotal).in('descripcion', descripcionesPosibles).order('fecha', { ascending: false }).limit(1);
+        const { data: movs } = await supabase.from('nexus_movimientos').select('*').eq('cuenta_id', cuentaDestino.id).eq('monto', montoTotal).in('descripcion', descripcionesPosibles).order('fecha', { ascending: false }).limit(1);
 
         if (movs && movs.length > 0) {
           await supabase.from('nexus_movimientos').delete().eq('id', movs[0].id);
@@ -163,19 +135,14 @@ export const LogisticsModule = () => {
           await supabase.from('nexus_cuentas').update({ saldo_actual: saldoRev }).eq('id', cuentaDestino.id);
         }
       }
-
       await supabase.from('logistica').update({ estado: 'Pendiente', destino_fondos: null }).eq('id', item.id);
       triggerHaptic('heavy'); refetch();
-    } catch (err) { alert(`Error al revertir: ${err.message}`); } 
-    finally { setIsSubmitting(false); }
+    } catch (err) { alert(`Error al revertir: ${err.message}`); } finally { setIsSubmitting(false); }
   };
 
   const deleteRecord = async (id) => {
     triggerHaptic('heavy');
-    if(window.confirm('¿Eliminar registro permanentemente?')) {
-      await supabase.from('logistica').delete().eq('id', id);
-      refetch();
-    }
+    if(window.confirm('¿Eliminar registro permanentemente?')) { await supabase.from('logistica').delete().eq('id', id); refetch(); }
   };
 
   return (
@@ -192,7 +159,7 @@ export const LogisticsModule = () => {
         <div className="flex gap-4 w-full lg:w-auto overflow-x-auto pb-2 hide-scrollbar">
           <div className="bg-[#0A0A0A]/60 backdrop-blur-2xl border border-white/5 p-6 md:p-8 rounded-4xl min-w-40 shadow-2xl relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><TrendingUp size={50} className="text-white" /></div>
-            <p className="text-[9px] text-emerald-400 font-black uppercase tracking-widest mb-2 flex items-center gap-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" /> Utilidad Ventas</p>
+            <p className="text-[9px] text-emerald-400 font-black uppercase tracking-widest mb-2 flex items-center gap-2"><span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]" /> Utilidad Ventas</p>
             <p className="text-3xl font-mono font-bold text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">${metricas.ventasNovia.toLocaleString(undefined, {minimumFractionDigits: 2})}</p>
             <p className="text-[8px] text-white/30 font-bold uppercase mt-2 tracking-tighter">Neto acumulado</p>
           </div>
@@ -215,7 +182,6 @@ export const LogisticsModule = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEnvios.map((item) => {
-          // Buscamos el nombre de la categoría dinámica, o usamos el texto viejo si existe
           const catName = categoriasAll?.find(c => c.id === item.categoria_id)?.nombre || item.categoria;
           return (
           <div key={item.id} className={`group bg-[#0A0A0A]/60 backdrop-blur-2xl border ${item.estado === 'cobrado' ? 'border-emerald-500/20 shadow-[0_0_30px_rgba(16,185,129,0.05)]' : 'border-white/5 shadow-2xl'} p-8 rounded-[2.5rem] hover:bg-white/2 transition-all relative overflow-hidden flex flex-col`}>
@@ -270,11 +236,11 @@ export const LogisticsModule = () => {
         )})}
       </div>
 
-      {/* MODAL COBRO DIFERIDO */}
+      {/* MODAL COBRO DIFERIDO (AJUSTADO CSS UI/UX) */}
       {collectingRecord && (
-        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 pt-20 md:p-4 overflow-hidden">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-4 animate-in fade-in duration-300 overflow-hidden">
           <div className="absolute inset-0" onClick={() => { triggerHaptic('light'); setCollectingRecord(null); }}></div>
-          <div className="w-full max-w-md bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-x md:border-b border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-slide-up-sheet max-h-[85vh] overflow-y-auto z-10 pb-16 md:pb-8 hide-scrollbar">
+          <div className="w-full max-w-md bg-[#0A0A0A]/95 backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative z-10 overflow-y-auto max-h-[85vh] md:max-h-[90vh] hide-scrollbar animate-in slide-in-from-bottom-10 md:zoom-in-95 duration-300">
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
             <button onClick={() => { triggerHaptic('light'); setCollectingRecord(null); }} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block active:scale-90"><X size={20} /></button>
             
@@ -300,11 +266,11 @@ export const LogisticsModule = () => {
         </div>
       )}
 
-      {/* MODAL FORMULARIO PRINCIPAL */}
+      {/* MODAL FORMULARIO PRINCIPAL (AJUSTADO CSS UI/UX Y CATEGORIA) */}
       {formMode && (
-        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 pt-20 md:p-4 overflow-hidden">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-4 animate-in fade-in duration-300 overflow-hidden">
           <div className="absolute inset-0" onClick={() => { triggerHaptic('light'); setFormMode(null); }}></div>
-          <div className="w-full max-w-2xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl relative animate-slide-up-sheet max-h-[85vh] overflow-y-auto z-10 pb-16 md:pb-10 hide-scrollbar">
+          <div className="w-full max-w-2xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative z-10 overflow-y-auto max-h-[85vh] md:max-h-[90vh] hide-scrollbar animate-in slide-in-from-bottom-10 md:zoom-in-95 duration-300">
             <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
             <button onClick={() => { triggerHaptic('light'); setFormMode(null); }} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block active:scale-90"><X size={20} /></button>
             
@@ -318,7 +284,7 @@ export const LogisticsModule = () => {
                   <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Categoría Dinámica</label>
                   <select value={formData.categoria_id || ''} onChange={e => setFormData({...formData, categoria_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white text-sm font-medium p-5 rounded-2xl focus:border-white/30 outline-none transition-all shadow-inner appearance-none">
                     <option value="" className="bg-black text-white/40">Sin categoría...</option>
-                    {categoriasAll?.map(c => <option key={c.id} value={c.id} className="bg-black">{c.nombre}</option>)}
+                    {categoriasLogistica?.map(c => <option key={c.id} value={c.id} className="bg-black">{c.nombre}</option>)}
                   </select>
                 </div>
                 <Input label="Dirección / Zona" placeholder="San Salvador" value={formData.direccion} onChange={e => setFormData({...formData, direccion: e.target.value})} />

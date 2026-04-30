@@ -131,7 +131,7 @@ export const ShiftModule = () => {
       const cuenta = cuentas.find(c => c.id === txForm.cuenta_id);
       if (!cuenta) throw new Error("Selecciona una cuenta válida");
 
-      const categoria = categoriasAll.find(c => c.id === txForm.categoria_id);
+      const categoriasFiltradas = categoriasAll?.filter(c => c.tipo === movForm.tipo && c.modulo === 'General') || [];
       if (!categoria) throw new Error("Debes seleccionar un Rubro/Categoría");
 
       let cbGenerado = 0;

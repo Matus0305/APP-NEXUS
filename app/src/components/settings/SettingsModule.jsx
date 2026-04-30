@@ -4,91 +4,65 @@ import { useSupabaseQuery } from '../../hooks/useSupabase';
 import { triggerHaptic } from '../../utils/haptics';
 import { 
   User, Shield, Camera, Save, CheckCircle2, EyeOff, 
-  UserCircle, Lock, Bell, Tags, ListChecks, Plus, Trash2, TrendingUp, TrendingDown
+  UserCircle, Lock, Bell, Tags, ListChecks, Plus, Trash2, TrendingUp, TrendingDown, Box
 } from 'lucide-react';
 
 export const SettingsModule = () => {
-  // 1. DATA FETCHING
   const { data: profileData, loading: loadP, refetch: refetchProfile } = useSupabaseQuery('nexus_profile');
   const { data: categories, loading: loadC, refetch: refetchCats } = useSupabaseQuery('nexus_categories');
   const { data: checklist, loading: loadCh, refetch: refetchChecks } = useSupabaseQuery('nexus_checklist');
 
-  // 2. ESTADOS
   const [activeTab, setActiveTab] = useState('Identidad');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   
-  // Estados de Formularios
   const [formData, setFormData] = useState({
     nombre: '', apellido: '', profesion: '', 
     avatar_url: '', fecha_nacimiento: '', modo_privacidad: false, alertas_activadas: true
   });
-  const [catForm, setCatForm] = useState({ nombre: '', tipo: 'Egreso', presupuesto_mensual: '' });
+  
+  // AÑADIDO: 'modulo' inicializado en 'General'
+  const [catForm, setCatForm] = useState({ nombre: '', tipo: 'Egreso', presupuesto_mensual: '', modulo: 'General' });
   const [checkForm, setCheckForm] = useState({ tarea: '' });
 
-  // 3. SINCRONIZACIÓN DE PERFIL
   useEffect(() => {
     if (profileData?.length > 0) {
       const p = profileData[0];
       setFormData({
-        nombre: p.nombre || '',
-        apellido: p.apellido || '',
-        profesion: p.profesion || '',
-        avatar_url: p.avatar_url || '',
-        fecha_nacimiento: p.fecha_nacimiento || '',
-        modo_privacidad: p.modo_privacidad || false,
-        alertas_activadas: p.alertas_activadas ?? true
+        nombre: p.nombre || '', apellido: p.apellido || '', profesion: p.profesion || '',
+        avatar_url: p.avatar_url || '', fecha_nacimiento: p.fecha_nacimiento || '',
+        modo_privacidad: p.modo_privacidad || false, alertas_activadas: p.alertas_activadas ?? true
       });
     }
   }, [profileData]);
 
-  // ==========================================
-  // HANDLERS: IDENTIDAD
-  // ==========================================
   const handleSaveProfile = async (e) => {
     if (e) e.preventDefault();
-    triggerHaptic('medium');
-    setIsSubmitting(true);
+    triggerHaptic('medium'); setIsSubmitting(true);
     try {
       if (!profileData || profileData.length === 0) {
         await supabase.from('nexus_profile').insert([{ ...formData, updated_at: new Date().toISOString() }]);
       } else {
         await supabase.from('nexus_profile').update({ ...formData, updated_at: new Date().toISOString() }).eq('id', profileData[0].id);
       }
-      triggerSuccess();
-      refetchProfile();
-    } catch (err) { alert("Error: " + err.message); } 
-    finally { setIsSubmitting(false); }
+      triggerSuccess(); refetchProfile();
+    } catch (err) { alert("Error: " + err.message); } finally { setIsSubmitting(false); }
   };
 
-  const togglePrivacy = () => {
-    triggerHaptic('light');
-    setFormData(prev => ({...prev, modo_privacidad: !prev.modo_privacidad}));
-  };
+  const togglePrivacy = () => { triggerHaptic('light'); setFormData(prev => ({...prev, modo_privacidad: !prev.modo_privacidad})); };
+  const toggleAlerts = () => { triggerHaptic('light'); setFormData(prev => ({...prev, alertas_activadas: !prev.alertas_activadas})); };
 
-  const toggleAlerts = () => {
-    triggerHaptic('light');
-    setFormData(prev => ({...prev, alertas_activadas: !prev.alertas_activadas}));
-  };
-
-  // ==========================================
-  // HANDLERS: CATEGORÍAS Y PRESUPUESTOS
-  // ==========================================
   const handleSaveCategory = async (e) => {
     e.preventDefault();
-    triggerHaptic('medium');
-    setIsSubmitting(true);
+    triggerHaptic('medium'); setIsSubmitting(true);
     try {
       await supabase.from('nexus_categories').insert([{
-        nombre: catForm.nombre,
-        tipo: catForm.tipo,
+        nombre: catForm.nombre, tipo: catForm.tipo, modulo: catForm.modulo,
         presupuesto_mensual: parseFloat(catForm.presupuesto_mensual) || 0
       }]);
-      setCatForm({ nombre: '', tipo: 'Egreso', presupuesto_mensual: '' });
-      triggerSuccess();
-      refetchCats();
-    } catch (err) { alert(err.message); } 
-    finally { setIsSubmitting(false); }
+      setCatForm({ nombre: '', tipo: 'Egreso', presupuesto_mensual: '', modulo: 'General' });
+      triggerSuccess(); refetchCats();
+    } catch (err) { alert(err.message); } finally { setIsSubmitting(false); }
   };
 
   const handleDeleteCategory = async (id) => {
@@ -98,32 +72,20 @@ export const SettingsModule = () => {
     refetchCats();
   };
 
-  // ==========================================
-  // HANDLERS: CHECKLIST
-  // ==========================================
   const handleSaveChecklist = async (e) => {
-    e.preventDefault();
-    triggerHaptic('medium');
-    setIsSubmitting(true);
+    e.preventDefault(); triggerHaptic('medium'); setIsSubmitting(true);
     try {
       await supabase.from('nexus_checklist').insert([{ tarea: checkForm.tarea }]);
-      setCheckForm({ tarea: '' });
-      triggerSuccess();
-      refetchChecks();
-    } catch (err) { alert(err.message); } 
-    finally { setIsSubmitting(false); }
+      setCheckForm({ tarea: '' }); triggerSuccess(); refetchChecks();
+    } catch (err) { alert(err.message); } finally { setIsSubmitting(false); }
   };
 
   const handleDeleteChecklist = async (id) => {
-    triggerHaptic('heavy');
-    await supabase.from('nexus_checklist').delete().eq('id', id);
-    refetchChecks();
+    triggerHaptic('heavy'); await supabase.from('nexus_checklist').delete().eq('id', id); refetchChecks();
   };
 
   const triggerSuccess = () => {
-    setShowSuccess(true);
-    triggerHaptic('light');
-    setTimeout(() => setShowSuccess(false), 3000);
+    setShowSuccess(true); triggerHaptic('light'); setTimeout(() => setShowSuccess(false), 3000);
   };
 
   if (loadP || loadC || loadCh) return (
@@ -135,8 +97,6 @@ export const SettingsModule = () => {
   return (
     <div className="w-full text-white font-sans relative pb-32 animate-in slide-in-from-bottom-8 fade-in duration-500">
       <div className="p-4 md:p-6 space-y-6 md:space-y-8 max-w-4xl mx-auto">
-        
-        {/* HEADER */}
         <header className="flex justify-between items-end border-b border-white/5 pb-6">
           <div>
             <h1 className="text-3xl md:text-5xl font-black tracking-tighter text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] uppercase">Ajustes</h1>
@@ -144,22 +104,12 @@ export const SettingsModule = () => {
           </div>
         </header>
 
-        {/* NAVEGACIÓN DE PESTAÑAS */}
         <div className="flex gap-2 p-1.5 bg-[#0A0A0A]/60 backdrop-blur-xl border border-white/5 rounded-2xl w-full overflow-x-auto hide-scrollbar">
             {['Identidad', 'Finanzas', 'Operaciones'].map(tab => (
-              <button 
-                key={tab} 
-                onClick={() => { triggerHaptic('light'); setActiveTab(tab); }} 
-                className={`flex-1 min-w-25 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
-              >
-                {tab}
-              </button>
+              <button key={tab} onClick={() => { triggerHaptic('light'); setActiveTab(tab); }} className={`flex-1 min-w-25 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{tab}</button>
             ))}
         </div>
 
-        {/* ========================================== */}
-        {/* PESTAÑA 1: IDENTIDAD Y SEGURIDAD */}
-        {/* ========================================== */}
         {activeTab === 'Identidad' && (
             <div className="space-y-6 animate-in zoom-in-95 duration-300">
                 <form id="profileForm" onSubmit={handleSaveProfile} className="space-y-6">
@@ -232,9 +182,6 @@ export const SettingsModule = () => {
             </div>
         )}
 
-        {/* ========================================== */}
-        {/* PESTAÑA 2: FINANZAS (CATEGORÍAS Y PRESUPUESTO) */}
-        {/* ========================================== */}
         {activeTab === 'Finanzas' && (
             <div className="space-y-6 animate-in zoom-in-95 duration-300">
                 <div className="bg-[#0A0A0A]/60 backdrop-blur-3xl border border-white/5 rounded-4xl p-6 md:p-10 shadow-2xl relative">
@@ -243,11 +190,19 @@ export const SettingsModule = () => {
                         <h2 className="text-[11px] font-black uppercase tracking-widest text-white/60">Estructura de Flujo</h2>
                     </div>
 
-                    {/* FORMULARIO NUEVA CATEGORÍA */}
                     <form onSubmit={handleSaveCategory} className="bg-white/5 p-5 rounded-3xl border border-white/5 mb-8">
                         <p className="text-[10px] text-white/40 font-black tracking-[0.2em] uppercase mb-4">Nueva Categoría</p>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
                             <Input label="Nombre (Ej. Lavado)" value={catForm.nombre} onChange={e => setCatForm({...catForm, nombre: e.target.value})} required />
+                            
+                            <div className="space-y-1.5 w-full">
+                                <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Ámbito</label>
+                                <select value={catForm.modulo} onChange={e => setCatForm({...catForm, modulo: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-sm font-bold p-4 rounded-2xl outline-none appearance-none">
+                                    <option className="bg-black" value="General">Billetera / Jornada</option>
+                                    <option className="bg-black" value="Logistica">Logística / Envíos</option>
+                                </select>
+                            </div>
+
                             <div className="space-y-1.5 w-full">
                                 <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Tipo</label>
                                 <select value={catForm.tipo} onChange={e => setCatForm({...catForm, tipo: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-sm font-bold p-4 rounded-2xl outline-none appearance-none">
@@ -255,27 +210,36 @@ export const SettingsModule = () => {
                                     <option className="bg-black" value="Ingreso">Entrada (Ingreso)</option>
                                 </select>
                             </div>
-                            {catForm.tipo === 'Egreso' && (
+
+                            {catForm.tipo === 'Egreso' && catForm.modulo === 'General' ? (
                                 <Input label="Presupuesto Mensual ($)" type="number" step="0.01" value={catForm.presupuesto_mensual} onChange={e => setCatForm({...catForm, presupuesto_mensual: e.target.value})} placeholder="0.00" />
+                            ) : (
+                                <button type="submit" disabled={isSubmitting} className={`w-full h-13 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 ${catForm.tipo === 'Egreso' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}>
+                                    <Plus size={16} /> Agregar
+                                </button>
                             )}
-                            <button type="submit" disabled={isSubmitting} className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 ${catForm.tipo === 'Egreso' ? 'bg-red-500 text-white md:col-span-1' : 'bg-emerald-500 text-black md:col-span-2'}`}>
-                                <Plus size={16} /> Agregar
-                            </button>
                         </div>
+                        {catForm.tipo === 'Egreso' && catForm.modulo === 'General' && (
+                             <button type="submit" disabled={isSubmitting} className="w-full mt-4 h-13 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 bg-red-500 text-white">
+                                 <Plus size={16} /> Agregar
+                             </button>
+                        )}
                     </form>
 
-                    {/* LISTA DE CATEGORÍAS EXISTENTES */}
                     <div className="space-y-4">
                         <p className="text-[10px] text-white/40 font-black tracking-[0.2em] uppercase border-b border-white/5 pb-2">Diccionario Activo</p>
                         {categories?.map(cat => (
                             <div key={cat.id} className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all">
                                 <div className="flex items-center gap-4">
-                                    <div className={`p-2 rounded-xl ${cat.tipo === 'Ingreso' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                                        {cat.tipo === 'Ingreso' ? <TrendingUp size={16}/> : <TrendingDown size={16}/>}
+                                    <div className={`p-2 rounded-xl ${cat.modulo === 'Logistica' ? 'bg-cyan-500/20 text-cyan-400' : (cat.tipo === 'Ingreso' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400')}`}>
+                                        {cat.modulo === 'Logistica' ? <Box size={16}/> : (cat.tipo === 'Ingreso' ? <TrendingUp size={16}/> : <TrendingDown size={16}/>)}
                                     </div>
                                     <div>
                                         <p className="text-sm font-bold text-white tracking-tight">{cat.nombre}</p>
-                                        <p className="text-[9px] text-white/40 uppercase font-black tracking-widest">{cat.tipo}</p>
+                                        <div className="flex gap-2 mt-1">
+                                           <span className="text-[8px] bg-white/10 px-2 py-0.5 rounded text-white/50 uppercase font-black tracking-widest">{cat.modulo}</span>
+                                           <span className="text-[8px] text-white/40 uppercase font-black tracking-widest">{cat.tipo}</span>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-6">
@@ -294,9 +258,6 @@ export const SettingsModule = () => {
             </div>
         )}
 
-        {/* ========================================== */}
-        {/* PESTAÑA 3: OPERACIONES (CHECKLIST) */}
-        {/* ========================================== */}
         {activeTab === 'Operaciones' && (
             <div className="space-y-6 animate-in zoom-in-95 duration-300">
                 <div className="bg-[#0A0A0A]/60 backdrop-blur-3xl border border-white/5 rounded-4xl p-6 md:p-10 shadow-2xl relative">
@@ -325,7 +286,6 @@ export const SettingsModule = () => {
             </div>
         )}
 
-        {/* NOTIFICACIÓN ÉXITO */}
         {showSuccess && (
           <div className="fixed bottom-24 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-3xl text-black px-6 py-4 rounded-2xl flex items-center gap-3 animate-in slide-in-from-bottom-10 fade-in duration-300 shadow-2xl z-200">
             <CheckCircle2 size={20} className="text-emerald-500" />
