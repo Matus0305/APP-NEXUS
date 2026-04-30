@@ -4,7 +4,7 @@ import { useSupabaseQuery } from '../../hooks/useSupabase';
 import { triggerHaptic } from '../../utils/haptics';
 import { 
   User, Shield, Camera, Save, CheckCircle2, EyeOff, 
-  UserCircle, Lock, Bell, Tags, ListChecks, Plus, Trash2, TrendingUp, TrendingDown, Box, Target, DollarSign
+  UserCircle, Lock, Bell, Tags, ListChecks, Plus, Trash2, TrendingUp, TrendingDown, Box, Target, DollarSign, Clock
 } from 'lucide-react';
 
 export const SettingsModule = () => {
@@ -16,7 +16,6 @@ export const SettingsModule = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   
-  // AÑADIDO: Campos de metas financieras en formData
   const [formData, setFormData] = useState({
     nombre: '', apellido: '', profesion: '', 
     avatar_url: '', fecha_nacimiento: '', modo_privacidad: false, alertas_activadas: true,
@@ -116,7 +115,7 @@ export const SettingsModule = () => {
 
         <div className="flex gap-2 p-1.5 bg-[#0A0A0A]/60 backdrop-blur-xl border border-white/5 rounded-2xl w-full overflow-x-auto hide-scrollbar">
             {['Identidad', 'Finanzas', 'Operaciones'].map(tab => (
-              <button key={tab} onClick={() => { triggerHaptic('light'); setActiveTab(tab); }} className={`flex-1 min-w-[100px] px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{tab}</button>
+              <button key={tab} onClick={() => { triggerHaptic('light'); setActiveTab(tab); }} className={`flex-1 min-w-25 px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab ? 'bg-white text-black shadow-md' : 'text-white/40 hover:text-white hover:bg-white/5'}`}>{tab}</button>
             ))}
         </div>
 
@@ -194,7 +193,6 @@ export const SettingsModule = () => {
 
         {activeTab === 'Finanzas' && (
             <div className="space-y-6 animate-in zoom-in-95 duration-300">
-                {/* AÑADIDO: Configuración de Metas Globales */}
                 <div className="bg-[#0A0A0A]/60 backdrop-blur-3xl border border-white/5 rounded-4xl p-6 md:p-10 shadow-2xl relative mb-6">
                     <div className="flex items-center gap-3 border-b border-white/5 pb-4 mb-6">
                         <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-400"><Target size={18} /></div>
@@ -245,13 +243,13 @@ export const SettingsModule = () => {
                             {catForm.tipo === 'Egreso' && catForm.modulo === 'General' ? (
                                 <Input label="Presupuesto Mensual ($)" type="number" step="0.01" value={catForm.presupuesto_mensual} onChange={e => setCatForm({...catForm, presupuesto_mensual: e.target.value})} placeholder="0.00" />
                             ) : (
-                                <button type="submit" disabled={isSubmitting} className={`w-full h-[52px] rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 ${catForm.tipo === 'Egreso' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}>
+                                <button type="submit" disabled={isSubmitting} className={`w-full h-13 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 ${catForm.tipo === 'Egreso' ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}>
                                     <Plus size={16} /> Agregar
                                 </button>
                             )}
                         </div>
                         {catForm.tipo === 'Egreso' && catForm.modulo === 'General' && (
-                             <button type="submit" disabled={isSubmitting} className="w-full mt-4 h-[52px] rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 bg-red-500 text-white">
+                             <button type="submit" disabled={isSubmitting} className="w-full mt-4 h-13 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all active:scale-95 bg-red-500 text-white">
                                  <Plus size={16} /> Agregar
                              </button>
                         )}
