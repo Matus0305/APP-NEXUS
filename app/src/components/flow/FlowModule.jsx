@@ -428,31 +428,38 @@ export const FlowModule = () => {
       )}
 
       {/* ======================================================== */}
-      {/* MODALES CON SCROLL INDEPENDIENTE (RESPONSIVE PERFECTO)   */}
+      {/* MODALES CON SCROLL INDEPENDIENTE (NUEVO ESTÁNDAR NEXUS)  */}
       {/* ======================================================== */}
 
       {/* MODAL: TRANSFERENCIA */}
       {showTransferForm && (
-        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-sm p-0 md:p-6 overflow-hidden">
-          <div className="absolute inset-0" onClick={() => { triggerHaptic('light'); setShowTransferForm(false); }}></div>
-          <div className="w-full max-w-md bg-[#0A0A0A]/95 backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative z-10 animate-slide-up-sheet flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-6 overflow-hidden">
+          <div className="absolute inset-0 hidden md:block" onClick={() => { triggerHaptic('light'); setShowTransferForm(false); }}></div>
+          <div className="w-full max-w-md bg-[#0A0A0A] md:bg-[#0A0A0A]/95 md:backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative flex flex-col h-full md:h-auto md:max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom duration-500">
             
             {/* Cabecera Fija */}
-            <div className="p-6 md:p-10 pb-4 md:pb-6 shrink-0 relative border-b border-white/5">
+            <div className="shrink-0 p-6 md:p-10 pb-4 border-b border-white/5 bg-[#0A0A0A] z-20">
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
-              <button onClick={() => setShowTransferForm(false)} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block transition-all hover:bg-white/10 active:scale-90"><X size={20} /></button>
-              <h2 className="text-3xl font-black tracking-tighter text-white mb-2">Mover Fondos</h2>
+              <div className="flex justify-between items-start md:items-center">
+                <div>
+                  <h2 className="text-3xl font-black tracking-tighter text-white">Mover Fondos</h2>
+                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-bold mt-1">Transferencia Interna</p>
+                </div>
+                <button onClick={() => setShowTransferForm(false)} className="p-3 bg-white/5 hover:bg-white/10 text-white rounded-full md:rounded-2xl transition-all active:scale-90">
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
-            {/* Contenido con Scroll */}
-            <div className="p-6 md:p-10 pt-4 overflow-y-auto flex-1 hide-scrollbar">
-              <form onSubmit={handleTransfer} className="space-y-6">
+            {/* Contenido con Scroll Real */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-6 hide-scrollbar relative z-10 pb-10">
+              <form id="transfer-form" onSubmit={handleTransfer} className="space-y-6">
                 <div className="space-y-4">
                   <div className="space-y-1.5">
                     <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Origen (Sale)</label>
-                    <select required value={transferForm.origen_id} onChange={e => setTransferForm({...transferForm, origen_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white p-4 rounded-2xl focus:border-white/30 outline-none appearance-none">
-                      <option value="">Seleccionar cuenta...</option>
-                      {cuentas?.map(c => <option key={c.id} value={c.id} className="bg-black">{c.nombre_cuenta} (${c.saldo_actual})</option>)}
+                    <select required value={transferForm.origen_id} onChange={e => setTransferForm({...transferForm, origen_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white p-4 rounded-2xl focus:border-white/30 outline-none appearance-none font-sans">
+                      <option value="" disabled className="bg-[#0A0A0A]">Seleccionar cuenta...</option>
+                      {cuentas?.map(c => <option key={c.id} value={c.id} className="bg-[#0A0A0A]">{c.nombre_cuenta} (${c.saldo_actual})</option>)}
                     </select>
                   </div>
                   <div className="flex justify-center -my-2">
@@ -460,20 +467,21 @@ export const FlowModule = () => {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Destino (Entra)</label>
-                    <select required value={transferForm.destino_id} onChange={e => setTransferForm({...transferForm, destino_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white p-4 rounded-2xl focus:border-white/30 outline-none appearance-none">
-                      <option value="">Seleccionar destino...</option>
-                      {cuentas?.map(c => <option key={c.id} value={c.id} className="bg-black">{c.nombre_cuenta}</option>)}
+                    <select required value={transferForm.destino_id} onChange={e => setTransferForm({...transferForm, destino_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white p-4 rounded-2xl focus:border-white/30 outline-none appearance-none font-sans">
+                      <option value="" disabled className="bg-[#0A0A0A]">Seleccionar destino...</option>
+                      {cuentas?.map(c => <option key={c.id} value={c.id} className="bg-[#0A0A0A]">{c.nombre_cuenta}</option>)}
                     </select>
                   </div>
-                </div>
-                <Input label="Monto a Transferir" type="number" step="0.01" required value={transferForm.monto} onChange={e => setTransferForm({...transferForm, monto: e.target.value})} placeholder="0.00" />
-                
-                <div className="pt-4 pb-6">
-                  <button type="submit" disabled={isSubmitting} className="w-full py-6 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-4xl active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.2)] disabled:opacity-50">
-                    {isSubmitting ? 'Procesando...' : 'Confirmar Transferencia'}
-                  </button>
+                  <Input label="Monto a Transferir" type="number" step="0.01" required value={transferForm.monto} onChange={e => setTransferForm({...transferForm, monto: e.target.value})} placeholder="0.00" className="w-full bg-white/5 border border-white/5 text-white p-4 rounded-2xl focus:border-white/30 outline-none font-mono" />
                 </div>
               </form>
+            </div>
+
+            {/* Acciones Fijas (Sticky Bottom) */}
+            <div className="shrink-0 p-6 md:p-10 border-t border-white/5 bg-[#0A0A0A] z-20">
+              <button form="transfer-form" type="submit" disabled={isSubmitting} className="w-full py-5 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-[0_10px_30px_rgba(255,255,255,0.2)] active:scale-95 transition-all disabled:opacity-50">
+                {isSubmitting ? 'Procesando...' : 'Confirmar Transferencia'}
+              </button>
             </div>
           </div>
         </div>
@@ -481,21 +489,29 @@ export const FlowModule = () => {
 
       {/* MODAL: NUEVO / EDITAR ACTIVO FINANCIERO */}
       {showAccountForm && (
-        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-6 overflow-hidden">
-          <div className="absolute inset-0" onClick={closeAccountForm}></div>
-          <div className="w-full max-w-2xl bg-[#0A0A0A]/95 backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative z-10 animate-slide-up-sheet flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-6 overflow-hidden">
+          <div className="absolute inset-0 hidden md:block" onClick={closeAccountForm}></div>
+          <div className="w-full max-w-2xl bg-[#0A0A0A] md:bg-[#0A0A0A]/95 md:backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative flex flex-col h-full md:h-auto md:max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom duration-500">
             
             {/* Cabecera Fija */}
-            <div className="p-6 md:p-10 pb-4 md:pb-6 shrink-0 relative border-b border-white/5">
+            <div className="shrink-0 p-6 md:p-10 pb-4 border-b border-white/5 bg-[#0A0A0A] z-20">
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
-              <button onClick={closeAccountForm} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block active:scale-90 transition-all hover:bg-white/10"><X size={20} /></button>
-              <h2 className="text-3xl font-black tracking-tighter text-white mb-2">{accountForm.id ? 'Editar Activo' : 'Nuevo Activo Financiero'}</h2>
-              <p className="text-white/40 text-[10px] uppercase tracking-widest font-bold">Configuración del Tarjetero Digital</p>
+              <div className="flex justify-between items-start md:items-center">
+                <div>
+                  <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-white uppercase italic">
+                    {accountForm.id ? 'Editar Activo' : 'Nuevo Activo'}
+                  </h2>
+                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-bold mt-1">Configuración del Tarjetero Digital</p>
+                </div>
+                <button onClick={closeAccountForm} className="p-3 bg-white/5 hover:bg-white/10 text-white rounded-full md:rounded-2xl transition-all active:scale-90">
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
-            {/* Contenido con Scroll */}
-            <div className="p-6 md:p-10 pt-4 overflow-y-auto flex-1 hide-scrollbar">
-              <form onSubmit={handleSaveAccount} className="space-y-6">
+            {/* Contenido con Scroll Real */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-6 hide-scrollbar relative z-10 pb-10">
+              <form id="account-form" onSubmit={handleSaveAccount} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Input label="Identidad de Cuenta" placeholder="Ej. Caja Principal" value={accountForm.nombre_cuenta} onChange={e => setAccountForm({...accountForm, nombre_cuenta: e.target.value})} required autoFocus />
                   <div className="space-y-1.5">
@@ -503,129 +519,127 @@ export const FlowModule = () => {
                     <select value={accountForm.tipo} onChange={e => {
                       const val = e.target.value;
                       setAccountForm({ ...accountForm, tipo: val, banco: val === 'Efectivo' ? 'Efectivo' : accountForm.banco, color_tarjeta: val === 'Efectivo' ? '#10b981' : accountForm.color_tarjeta });
-                    }} className="w-full bg-white/5 border border-white/5 text-white font-medium p-4 rounded-2xl focus:border-white/30 outline-none appearance-none transition-all">
-                      <option className="bg-black" value="Efectivo">Efectivo (Cash)</option>
-                      <option className="bg-black" value="Cuentas">Cuenta</option>
-                      <option className="bg-black" value="Crédito">Tarjeta de crédito</option>
-                      <option className="bg-black" value="Débito">Tarjeta de débito</option>
+                    }} className="w-full bg-white/5 border border-white/5 text-white font-medium p-4 rounded-2xl focus:border-white/30 outline-none appearance-none transition-all font-sans">
+                      <option className="bg-[#0A0A0A]" value="Efectivo">Efectivo (Cash)</option>
+                      <option className="bg-[#0A0A0A]" value="Cuentas">Cuenta Bancaria</option>
+                      <option className="bg-[#0A0A0A]" value="Crédito">Tarjeta de Crédito</option>
+                      <option className="bg-[#0A0A0A]" value="Débito">Tarjeta de Débito</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1">Color Estético</label>
-                    <input type="color" value={accountForm.color_tarjeta} onChange={e => setAccountForm({...accountForm, color_tarjeta: e.target.value})} className="w-full h-13 bg-white/5 border border-white/5 rounded-2xl p-1 cursor-pointer transition-all" />
+                    <input type="color" value={accountForm.color_tarjeta} onChange={e => setAccountForm({...accountForm, color_tarjeta: e.target.value})} className="w-full h-14 bg-white/5 border border-white/5 rounded-2xl p-1 cursor-pointer transition-all" />
                   </div>
                 </div>
 
                 {accountForm.tipo !== 'Efectivo' && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in fade-in duration-300">
-                    <Input label="Institución / Banco" placeholder="Ej. Banco Agrícola" value={accountForm.banco} onChange={e => setAccountForm({...accountForm, banco: e.target.value})} required />
-                    <Input label={accountForm.tipo === 'Cuentas' ? 'Nº de Cuenta Completo' : 'Últimos 4 Dígitos'} placeholder={accountForm.tipo === 'Cuentas' ? 'Ej. 0000012345678' : '4567'} maxLength={accountForm.tipo === 'Cuentas' ? '30' : '4'} value={accountForm.ultimos_digitos} onChange={e => setAccountForm({...accountForm, ultimos_digitos: e.target.value})} />
+                    <Input label="Institución Bancaria" placeholder="Ej. Bank of America" value={accountForm.banco} onChange={e => setAccountForm({...accountForm, banco: e.target.value})} required />
+                    <Input label={accountForm.tipo === 'Cuentas' ? 'Nº Completo / CLABE' : 'Últimos 4 Dígitos'} type="number" placeholder={accountForm.tipo === 'Cuentas' ? 'Ej. 0000012345678' : 'Ej. 1234'} maxLength={accountForm.tipo === 'Cuentas' ? 30 : 4} value={accountForm.ultimos_digitos} onChange={e => setAccountForm({...accountForm, ultimos_digitos: e.target.value})} />
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-6 border-t border-white/5 bg-white/5 p-5 rounded-4xl">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-emerald-400 font-black uppercase tracking-widest ml-1">{accountForm.tipo === 'Crédito' ? 'Deuda Inicial ($)' : 'Saldo de Apertura ($)'}</label>
-                    <input type="number" step="0.01" required value={accountForm.saldo_actual} onChange={e => setAccountForm({...accountForm, saldo_actual: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all placeholder:text-white/10" placeholder="0.00"/>
-                  </div>
+                <div className="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
+                  <Input label={accountForm.tipo === 'Crédito' ? 'Deuda Inicial ($)' : 'Saldo de Apertura ($)'} type="number" step="0.01" value={accountForm.saldo_actual} onChange={e => setAccountForm({...accountForm, saldo_actual: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all" placeholder="0.00" required/>
+                  
                   {accountForm.tipo === 'Crédito' && (
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] text-cyan-400 font-black uppercase tracking-widest ml-1">Límite Autorizado ($)</label>
-                      <input type="number" step="0.01" value={accountForm.limite_credito} onChange={e => setAccountForm({...accountForm, limite_credito: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-cyan-400/50 outline-none transition-all placeholder:text-white/10" placeholder="0.00"/>
-                    </div>
+                    <Input label="Límite Autorizado ($)" type="number" step="0.01" value={accountForm.limite_credito} onChange={e => setAccountForm({...accountForm, limite_credito: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-cyan-400/50 outline-none transition-all" placeholder="0.00" required/>
                   )}
                   {accountForm.tipo === 'Cuentas' && (
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] text-emerald-400 font-black uppercase tracking-widest ml-1">Rendimiento Anual (TEA %)</label>
-                      <input type="number" step="0.1" value={accountForm.tasa_rendimiento} onChange={e => setAccountForm({...accountForm, tasa_rendimiento: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all placeholder:text-white/10" placeholder="3.5"/>
-                    </div>
+                    <Input label="Rendimiento Anual (TEA %)" type="number" step="0.01" value={accountForm.tasa_rendimiento} onChange={e => setAccountForm({...accountForm, tasa_rendimiento: e.target.value})} className="w-full bg-black/40 border border-white/5 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-emerald-400/50 outline-none transition-all" placeholder="3.5"/>
                   )}
                   {(accountForm.tipo === 'Crédito' || accountForm.tipo === 'Débito') && (
-                    <div className="space-y-1.5">
-                      <label className="text-[9px] text-purple-400 font-black uppercase tracking-widest ml-1">Cashback Inicial ($)</label>
-                      <input type="number" step="0.01" value={accountForm.cashback_acumulado} onChange={e => setAccountForm({...accountForm, cashback_acumulado: e.target.value})} className="w-full bg-black/40 border border-purple-500/20 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-purple-400/50 outline-none transition-all placeholder:text-purple-400/30" placeholder="0.00"/>
-                    </div>
-                  )}
-                  {accountForm.tipo === 'Crédito' && (
-                    <>
-                      <Input label="Día de Corte (Ej. 15)" type="number" min="1" max="31" value={accountForm.fecha_corte} onChange={e => setAccountForm({...accountForm, fecha_corte: e.target.value})} placeholder="15" />
-                      <Input label="Día Límite Pago (Ej. 5)" type="number" min="1" max="31" value={accountForm.fecha_pago} onChange={e => setAccountForm({...accountForm, fecha_pago: e.target.value})} placeholder="5" />
-                    </>
+                    <Input label="Cashback Inicial ($)" type="number" step="0.01" value={accountForm.cashback_acumulado} onChange={e => setAccountForm({...accountForm, cashback_acumulado: e.target.value})} className="w-full bg-black/40 border border-purple-500/20 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-purple-400/50 outline-none transition-all placeholder:text-purple-400/30" placeholder="0.00"/>
                   )}
                 </div>
 
-                <div className="pt-4 pb-6">
-                  <button type="submit" disabled={isSubmitting} className="w-full py-6 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-4xl active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.2)] disabled:opacity-50">
-                    {isSubmitting ? 'Procesando...' : (accountForm.id ? 'Guardar Cambios' : 'Crear Activo Financiero')}
-                  </button>
-                </div>
+                {accountForm.tipo === 'Crédito' && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <Input label="Día de Corte" type="number" min="1" max="31" value={accountForm.fecha_corte} onChange={e => setAccountForm({...accountForm, fecha_corte: e.target.value})} placeholder="15" />
+                    <Input label="Día de Pago" type="number" min="1" max="31" value={accountForm.fecha_pago} onChange={e => setAccountForm({...accountForm, fecha_pago: e.target.value})} placeholder="5" />
+                  </div>
+                )}
               </form>
+            </div>
+
+            {/* Acciones Fijas (Sticky Bottom) */}
+            <div className="shrink-0 p-6 md:p-10 border-t border-white/5 bg-[#0A0A0A] z-20">
+              <button form="account-form" type="submit" disabled={isSubmitting} className="w-full py-5 bg-white text-black font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-95 transition-all shadow-[0_10px_30px_rgba(255,255,255,0.2)] disabled:opacity-50">
+                {isSubmitting ? 'Procesando...' : (accountForm.id ? 'Guardar Cambios' : 'Crear Activo Financiero')}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* MODAL: REGISTRO DE FLUJO (CON VÍNCULO A CATEGORÍAS) */}
+      {/* MODAL: REGISTRO DE FLUJO */}
       {showMovForm && (
-        <div className="fixed inset-0 z-100 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-6 overflow-hidden">
-          <div className="absolute inset-0" onClick={() => { triggerHaptic('light'); setShowMovForm(false); }}></div>
-          <div className="w-full max-w-md bg-[#0A0A0A]/95 backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-[0_-20px_50px_rgba(0,0,0,0.8)] relative animate-slide-up-sheet flex flex-col max-h-[90vh]">
+        <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/80 backdrop-blur-md p-0 md:p-6 overflow-hidden">
+          <div className="absolute inset-0 hidden md:block" onClick={() => { triggerHaptic('light'); setShowMovForm(false); }}></div>
+          <div className="w-full max-w-md bg-[#0A0A0A] md:bg-[#0A0A0A]/95 md:backdrop-blur-3xl border-t md:border border-white/10 rounded-t-[2.5rem] md:rounded-[2.5rem] shadow-2xl relative flex flex-col h-full md:h-auto md:max-h-[92vh] overflow-hidden animate-in slide-in-from-bottom duration-500">
             
             {/* Cabecera Fija */}
-            <div className="p-6 md:p-10 pb-4 md:pb-6 shrink-0 relative border-b border-white/5">
+            <div className="shrink-0 p-6 md:p-10 pb-4 border-b border-white/5 bg-[#0A0A0A] z-20">
               <div className="w-12 h-1.5 bg-white/20 rounded-full mx-auto mb-6 md:hidden"></div>
-              <button onClick={() => { triggerHaptic('light'); setShowMovForm(false); }} className="absolute top-6 right-6 text-white/40 hover:text-white bg-white/5 p-2 rounded-full hidden md:block active:scale-90 transition-all hover:bg-white/10"><X size={20} /></button>
-              <h2 className="text-3xl font-black tracking-tighter text-white mb-2">Registro de Flujo</h2>
+              <div className="flex justify-between items-start md:items-center">
+                <div>
+                  <h2 className="text-3xl font-black tracking-tighter text-white">Registro de Flujo</h2>
+                  <p className="text-white/40 text-[10px] uppercase tracking-[0.2em] font-bold mt-1">Transacción Diaria</p>
+                </div>
+                <button onClick={() => { triggerHaptic('light'); setShowMovForm(false); }} className="p-3 bg-white/5 hover:bg-white/10 text-white rounded-full md:rounded-2xl transition-all active:scale-90">
+                  <X size={20} />
+                </button>
+              </div>
             </div>
 
-            {/* Contenido con Scroll */}
-            <div className="p-6 md:p-10 pt-4 overflow-y-auto flex-1 hide-scrollbar">
-              <form onSubmit={handleSaveMovement} className="space-y-6">
-                <div className="flex bg-white/5 p-1.5 rounded-2xl border border-white/5">
-                  <button type="button" onClick={() => { triggerHaptic('light'); setMovForm({...movForm, tipo: 'Egreso', categoria_id: ''}); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${movForm.tipo === 'Egreso' ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'text-white/40'}`}>
+            {/* Contenido con Scroll Real */}
+            <div className="flex-1 overflow-y-auto p-6 md:p-10 pt-6 hide-scrollbar relative z-10 pb-10">
+              <form id="mov-form" onSubmit={handleSaveMovement} className="space-y-6">
+                <div className="flex bg-white/5 p-1 rounded-2xl mb-6">
+                  <button type="button" onClick={() => { triggerHaptic('light'); setMovForm({...movForm, tipo: 'Egreso', categoria_id: ''}); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${movForm.tipo === 'Egreso' ? 'bg-red-500 text-white shadow-[0_0_15px_rgba(239,68,68,0.4)]' : 'text-white/40 hover:text-white/60'}`}>
                     Gasto / Salida
                   </button>
-                  <button type="button" onClick={() => { triggerHaptic('light'); setMovForm({...movForm, tipo: 'Ingreso', categoria_id: ''}); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${movForm.tipo === 'Ingreso' ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'text-white/40'}`}>
+                  <button type="button" onClick={() => { triggerHaptic('light'); setMovForm({...movForm, tipo: 'Ingreso', categoria_id: ''}); }} className={`flex-1 py-4 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${movForm.tipo === 'Ingreso' ? 'bg-emerald-500 text-black shadow-[0_0_15px_rgba(16,185,129,0.4)]' : 'text-white/40 hover:text-white/60'}`}>
                     Ingreso / Entrada
                   </button>
                 </div>
-                
-                <div className="text-center bg-white/5 rounded-4xl p-6 border border-white/5">
-                  <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest block mb-2">Monto de Operación ($)</label>
-                  <div className="flex items-center justify-center gap-2">
-                    <span className={`text-3xl font-black ${movForm.tipo === 'Ingreso' ? 'text-emerald-400' : 'text-red-400'}`}>$</span>
-                    <input type="number" step="0.01" autoFocus required value={movForm.monto} onChange={e => setMovForm({...movForm, monto: e.target.value})} className="w-32 bg-transparent text-white text-5xl font-black outline-none font-mono text-center placeholder:text-white/10" placeholder="0.00" />
+
+                <div className="flex flex-col items-center justify-center py-8 bg-black/40 rounded-3xl border border-white/5">
+                  <label className="text-[10px] uppercase font-bold tracking-widest text-white/40 mb-2">Monto de Operación ($)</label>
+                  <div className="flex items-center">
+                    <span className="text-4xl text-white/40 font-mono mr-2">$</span>
+                    <input type="number" step="0.01" required value={movForm.monto} onChange={e => setMovForm({...movForm, monto: e.target.value})} className="w-40 bg-transparent text-white text-5xl font-black outline-none font-mono text-left placeholder:text-white/10" placeholder="0.00" autoFocus />
                   </div>
                 </div>
 
-                <div className="space-y-1.5 pt-2">
+                <div className="space-y-1.5">
                   <label className="text-[9px] text-white/40 font-bold uppercase tracking-widest ml-1 flex items-center gap-2"><Tags size={12}/> Categoría</label>
-                  <select required value={movForm.categoria_id} onChange={e => setMovForm({...movForm, categoria_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white font-bold p-4 rounded-2xl outline-none appearance-none focus:border-white/30 transition-all">
-                    <option value="" disabled className="bg-black text-white/40">Selecciona el rubro...</option>
-                    {categoriasFiltradas?.map(cat => <option className="bg-black" key={cat.id} value={cat.id}>{cat.nombre}</option>)}
+                  <select required value={movForm.categoria_id} onChange={e => setMovForm({...movForm, categoria_id: e.target.value})} className="w-full bg-white/5 border border-white/5 text-white font-bold p-4 rounded-2xl outline-none appearance-none focus:border-white/30 transition-all font-sans">
+                    <option value="" disabled className="bg-[#0A0A0A]">Selecciona el rubro...</option>
+                    {categoriasFiltradas?.map(cat => <option key={cat.id} value={cat.id} className="bg-[#0A0A0A]">{cat.nombre}</option>)}
                   </select>
                 </div>
 
-                <Input label="Nota Opcional" placeholder="Detalles de la compra..." value={movForm.descripcion} onChange={e => setMovForm({...movForm, descripcion: e.target.value})} />
-                
+                <Input label="Descripción (Opcional)" value={movForm.descripcion} onChange={e => setMovForm({...movForm, descripcion: e.target.value})} placeholder="Detalles de la transacción..." />
+
                 {(selectedAccount.tipo === 'Crédito' || selectedAccount.tipo === 'Débito') && movForm.tipo === 'Egreso' && (
-                  <div className="p-5 border border-purple-500/30 bg-purple-500/10 rounded-4xl animate-in fade-in slide-in-from-top-4 duration-300">
-                    <label className="text-[9px] text-purple-400 font-black uppercase tracking-widest ml-1">% Cashback Aplicado (Opcional)</label>
-                    <input type="number" step="0.1" value={movForm.porcentaje_cashback} onChange={e => setMovForm({...movForm, porcentaje_cashback: e.target.value})} className="w-full mt-2 bg-black/40 border border-purple-500/20 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-purple-400 outline-none transition-all placeholder:text-purple-400/30" placeholder="Ej. 1.5"/>
+                  <div className="p-5 bg-purple-500/10 rounded-2xl border border-purple-500/20">
+                    <Input label="% Cashback Aplicado (Opcional)" type="number" step="0.01" value={movForm.porcentaje_cashback} onChange={e => setMovForm({...movForm, porcentaje_cashback: e.target.value})} className="w-full bg-black/40 border border-purple-500/20 text-white text-xl font-mono font-bold p-4 rounded-xl focus:border-purple-400 outline-none transition-all placeholder:text-purple-400/30" placeholder="Ej. 1.5"/>
                     {movForm.monto > 0 && movForm.porcentaje_cashback > 0 && (
-                      <p className="text-[10px] text-purple-400 font-mono mt-3 text-right uppercase font-bold tracking-widest">
-                        Generando +${(parseFloat(movForm.monto) * (parseFloat(movForm.porcentaje_cashback)/100)).toFixed(2)} USD
+                      <p className="text-[10px] text-purple-400 font-black tracking-widest uppercase mt-3 flex items-center gap-2">
+                        <Sparkles size={12}/> Generando +${(parseFloat(movForm.monto) * (parseFloat(movForm.porcentaje_cashback)/100)).toFixed(2)} USD
                       </p>
                     )}
                   </div>
                 )}
-                
-                <div className="pt-4 pb-6">
-                  <button type="submit" disabled={isSubmitting} className={`w-full py-6 text-white font-black uppercase tracking-widest text-[11px] rounded-4xl active:scale-95 transition-all shadow-lg disabled:opacity-50 ${movForm.tipo === 'Ingreso' ? 'bg-emerald-500 hover:bg-emerald-600 text-black shadow-[0_10px_30px_rgba(16,185,129,0.3)]' : 'bg-red-500 hover:bg-red-600 shadow-[0_10px_30px_rgba(239,68,68,0.3)]'}`}>
-                    {isSubmitting ? 'Procesando...' : 'Confirmar Transacción'}
-                  </button>
-                </div>
               </form>
+            </div>
+
+            {/* Acciones Fijas (Sticky Bottom) */}
+            <div className="shrink-0 p-6 md:p-10 border-t border-white/5 bg-[#0A0A0A] z-20">
+              <button form="mov-form" type="submit" disabled={isSubmitting} className={`w-full py-5 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl shadow-[0_0_20px_rgba(255,255,255,0.2)] active:scale-95 transition-all disabled:opacity-50 ${movForm.tipo === 'Ingreso' ? 'bg-emerald-500 text-black hover:bg-emerald-600' : 'bg-red-500 text-white hover:bg-red-600'}`}>
+                {isSubmitting ? 'Procesando...' : 'Confirmar Transacción'}
+              </button>
             </div>
           </div>
         </div>
@@ -633,18 +647,25 @@ export const FlowModule = () => {
 
       {/* MODAL DE ELIMINACIÓN */}
       {isDeleting && (
-        <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4 animate-in fade-in duration-300">
-          <div className="p-10 bg-[#050505] border border-red-500/20 rounded-[3rem] space-y-6 w-full max-w-sm shadow-2xl text-center animate-in zoom-in-95">
-            <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6 border border-red-500/20"><AlertCircle size={40} /></div>
+        <div className="fixed inset-0 z-110 flex items-center justify-center bg-black/90 backdrop-blur-2xl p-4 animate-in fade-in duration-300">
+          <div className="p-8 bg-[#050505] border border-red-500/30 rounded-[2.5rem] space-y-6 w-full max-w-sm shadow-[0_0_50px_rgba(239,68,68,0.15)] animate-in zoom-in-95 text-center">
+            <div className="w-20 h-20 bg-red-500/10 text-red-500 rounded-full flex items-center justify-center mx-auto mb-2 border border-red-500/20">
+              <AlertCircle size={40}/>
+            </div>
             <h3 className="text-2xl font-black text-white tracking-tighter uppercase">¿Destruir Activo?</h3>
-            <p className="text-xs text-white/40 leading-relaxed font-bold tracking-widest">Esta acción borrará la cuenta y todo su historial de forma irreversible.</p>
-            <div className="flex flex-col gap-3 pt-6">
-              <button onClick={handleDeleteAccount} disabled={isSubmitting} className="w-full py-5 bg-red-500 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-95 transition-all shadow-[0_10px_30px_rgba(239,68,68,0.3)]">{isSubmitting ? 'Borrando...' : 'Confirmar Destrucción'}</button>
-              <button onClick={() => { triggerHaptic('light'); setIsDeleting(false); }} className="w-full py-5 bg-white/5 hover:bg-white/10 text-white/50 font-black uppercase tracking-widest text-[11px] rounded-2xl border border-white/5 active:scale-95 transition-all">Cancelar</button>
+            <p className="text-[10px] text-white/40 leading-relaxed font-bold tracking-widest uppercase">Esta acción borrará la cuenta y todo su historial de forma irreversible.</p>
+            <div className="flex flex-col gap-3 pt-4">
+              <button onClick={handleDeleteAccount} disabled={isSubmitting} className="w-full py-5 bg-red-500 text-white font-black uppercase tracking-widest text-[11px] rounded-2xl active:scale-95 transition-all shadow-[0_10px_30px_rgba(239,68,68,0.3)]">
+                {isSubmitting ? 'Borrando...' : 'Confirmar Destrucción'}
+              </button>
+              <button onClick={() => { triggerHaptic('light'); setIsDeleting(false); }} className="w-full py-5 bg-white/5 hover:bg-white/10 text-white/50 font-black uppercase tracking-widest text-[11px] rounded-2xl border border-white/5 active:scale-95 transition-all">
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 };
